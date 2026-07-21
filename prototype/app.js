@@ -70,9 +70,9 @@ const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿"];
 
 function emptyState() {
   return {
-    version: 6, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
+    version: 7, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
-    editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null,
+    editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null, calendarOffset: 0,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
   };
 }
@@ -85,7 +85,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 6, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 7, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -418,8 +418,9 @@ function localDateKey(timestamp) {
 
 function calendarHtml() {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
+  const cursor = new Date(today.getFullYear(), today.getMonth() + state.calendarOffset, 1);
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
   const firstWeekday = new Date(year, month, 1).getDay();
   const days = new Date(year, month + 1, 0).getDate();
   const trained = new Set(state.history.map(workout => localDateKey(workout.startedAt)));
@@ -427,11 +428,11 @@ function calendarHtml() {
   for (let i = 0; i < firstWeekday; i++) cells.push(`<span class="calendar-day blank"></span>`);
   for (let day = 1; day <= days; day++) {
     const key = `${year}-${month + 1}-${day}`;
-    const isToday = day === today.getDate();
+    const isToday = year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
     const isTrained = trained.has(key);
     cells.push(`<button class="calendar-day ${isToday ? "today" : ""} ${isTrained ? "trained" : ""}" data-calendar-date="${key}"><b>${day}</b>${isTrained ? "<i></i>" : ""}</button>`);
   }
-  return `<article class="calendar-card"><div class="between"><h3>${year} 年 ${month + 1} 月</h3><span class="subtle">● 有训练记录</span></div><div class="week-row">${["日", "一", "二", "三", "四", "五", "六"].map(day => `<span>${day}</span>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div></article>`;
+  return `<article class="calendar-card"><div class="calendar-header"><div class="calendar-controls"><button data-action="previous-calendar-month" aria-label="上一个月">‹</button><h3>${year} 年 ${month + 1} 月</h3><button data-action="next-calendar-month" aria-label="下一个月" ${state.calendarOffset >= 0 ? "disabled" : ""}>›</button></div>${state.calendarOffset < 0 ? `<button class="text-button" data-action="current-calendar-month">回到本月</button>` : `<span class="subtle">● 有训练记录</span>`}</div><div class="week-row">${["日", "一", "二", "三", "四", "五", "六"].map(day => `<span>${day}</span>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div></article>`;
 }
 
 function renderHistory() {
@@ -689,6 +690,9 @@ function addExercise(id) {
 
 function handleAction(action, el) {
   if (action === "start-workout") return startWorkout();
+  if (action === "previous-calendar-month") { state.calendarOffset -= 1; saveState(); return render(); }
+  if (action === "next-calendar-month") { state.calendarOffset = Math.min(0, state.calendarOffset + 1); saveState(); return render(); }
+  if (action === "current-calendar-month") { state.calendarOffset = 0; saveState(); return render(); }
   if (action === "go-train") { state.screen = "train"; saveState(); return render(); }
   if (action === "back-workout") { state.screen = "workout"; saveState(); return render(); }
   if (action === "open-library") { state.screen = "exercises"; saveState(); return render(); }

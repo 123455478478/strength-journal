@@ -405,6 +405,11 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 
 .calendar-card { margin-top: 20px; padding: 17px; border: 1px solid var(--line); border-radius: 20px; background: white; }
 .calendar-card h3 { margin: 0; }
+.calendar-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.calendar-controls { display: flex; align-items: center; gap: 8px; }
+.calendar-controls button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; color: var(--green); background: var(--green-soft); font-size: 22px; }
+.calendar-controls button:disabled { color: #aab5b1; background: #eef2f0; }
+.calendar-controls h3 { min-width: 104px; text-align: center; }
 .week-row, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
 .week-row { margin-top: 17px; color: var(--muted); font-size: 11px; }
 .calendar-grid { row-gap: 6px; margin-top: 8px; }
