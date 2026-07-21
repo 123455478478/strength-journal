@@ -790,6 +790,11 @@ function handleAction(action, el) {
     saveState(); return render();
   }
   if (action === "finish-workout") {
+    if (!state.workout.exercises.length) {
+      state.workout = null;
+      state.screen = "train";
+      saveState(); return render();
+    }
     if (!completedSetCount()) return toast("请至少完成一组后再保存训练");
     const saved = JSON.parse(JSON.stringify(state.workout));
     saved.endedAt = now();

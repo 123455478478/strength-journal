@@ -15,6 +15,12 @@ const { pathToFileURL } = require("url");
   await page.reload();
 
   await page.getByRole("button", { name: "开始健身" }).click();
+  await page.getByRole("button", { name: "结束健身" }).click();
+  if (!await page.getByRole("button", { name: "开始健身" }).isVisible()) throw new Error("空训练结束后没有返回首页");
+  const emptyHistoryCount = await page.evaluate(() => JSON.parse(localStorage.getItem("strength-journal-recorder-v2")).history.length);
+  if (emptyHistoryCount !== 0) throw new Error("没有动作的空训练被错误写入历史");
+
+  await page.getByRole("button", { name: "开始健身" }).click();
   await page.getByRole("button", { name: "先添加一个动作" }).click();
   await page.locator('[data-add-exercise="bench"]').click();
   await page.getByRole("button", { name: "开始第 1 组" }).click();
@@ -98,6 +104,10 @@ const { pathToFileURL } = require("url");
   await page.screenshot({ path: path.join(__dirname, "preview-history.png"), fullPage: true });
 
   await page.locator('[data-nav="exercises"]').click();
+  for (const group of ["胸部", "背部", "肩部", "手臂", "腿"]) {
+    await page.getByRole("button", { name: group, exact: true }).click();
+    if (await page.locator(".group-summary strong").textContent() !== group) throw new Error(`${group}筛选按钮无法使用`);
+  }
   await page.getByRole("button", { name: "背部", exact: true }).click();
   await page.locator('[data-detail-id="pulldown"]').click();
   if (await page.locator(".tip-card li").count() !== 3) throw new Error("动作要点未显示");

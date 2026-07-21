@@ -1,4 +1,4 @@
-const CACHE_NAME = "strength-journal-v3";
+const CACHE_NAME = "strength-journal-v4";
 const APP_FILES = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {
