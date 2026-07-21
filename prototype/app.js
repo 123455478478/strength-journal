@@ -432,7 +432,7 @@ function calendarHtml() {
     const isTrained = trained.has(key);
     cells.push(`<button class="calendar-day ${isToday ? "today" : ""} ${isTrained ? "trained" : ""}" data-calendar-date="${key}"><b>${day}</b>${isTrained ? "<i></i>" : ""}</button>`);
   }
-  return `<article class="calendar-card"><div class="calendar-header"><div class="calendar-controls"><button data-action="previous-calendar-month" aria-label="上一个月">‹</button><h3>${year} 年 ${month + 1} 月</h3><button data-action="next-calendar-month" aria-label="下一个月" ${state.calendarOffset >= 0 ? "disabled" : ""}>›</button></div>${state.calendarOffset < 0 ? `<button class="text-button" data-action="current-calendar-month">回到本月</button>` : `<span class="subtle">● 有训练记录</span>`}</div><div class="week-row">${["日", "一", "二", "三", "四", "五", "六"].map(day => `<span>${day}</span>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div></article>`;
+  return `<article class="calendar-card"><div class="calendar-header"><div class="calendar-controls"><button data-action="previous-calendar-month" aria-label="上一个月">‹</button><h3>${year} 年 ${month + 1} 月</h3><button data-action="next-calendar-month" aria-label="下一个月" ${state.calendarOffset >= 0 ? "disabled" : ""}>›</button></div>${state.calendarOffset < 0 ? `<button class="text-button" data-action="current-calendar-month">回到本月</button>` : `<span class="subtle">● 训练记录</span>`}</div><div class="week-row">${["日", "一", "二", "三", "四", "五", "六"].map(day => `<span>${day}</span>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div></article>`;
 }
 
 function renderHistory() {
