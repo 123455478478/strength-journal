@@ -33,8 +33,12 @@ const server = http.createServer((request, response) => {
   });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto("http://127.0.0.1:4173/");
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.reload();
+  await page.waitForTimeout(1500);
+  await page.waitForLoadState("load");
+  if (!await page.getByText("真实记录，真实进步！", { exact: true }).isVisible()) throw new Error("首页新文案未实际渲染");
+  await page.locator('[data-nav="history"]').click();
+  if (!await page.getByText("● 训练记录", { exact: true }).isVisible()) throw new Error("日历新说明未实际渲染");
+  await page.locator('[data-nav="train"]').click();
   const controlled = await page.evaluate(() => Boolean(navigator.serviceWorker.controller));
   if (!controlled) throw new Error("Service Worker 未接管页面");
 
