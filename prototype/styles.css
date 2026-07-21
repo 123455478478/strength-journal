@@ -227,6 +227,10 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 .chevron { color: #9caaa5; font-size: 23px; }
 
 .actions { display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; margin-top: 18px; }
+.workout-note-card { margin-top: 18px; padding: 15px; border: 1px solid var(--line); border-radius: 18px; background: white; }
+.workout-note-card label { display: block; margin-bottom: 8px; font-weight: 800; }
+.workout-note-card textarea, .editor-note textarea { width: 100%; min-height: 88px; padding: 11px; resize: vertical; border: 1px solid var(--line); border-radius: 12px; outline: 0; color: var(--ink); background: var(--paper); }
+.workout-note-card small { display: block; margin-top: 6px; color: var(--muted); }
 
 .workout-empty {
   display: grid;
@@ -325,6 +329,8 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 .number-wrap span { color: rgba(255,255,255,.55); font-size: 13px; }
 .complete-set { margin-top: 18px; background: #f4c177; color: #2c1a08; }
 .cancel-link { margin: 15px auto 0; border: 0; color: rgba(255,255,255,.65); background: transparent; }
+.active-hint { margin: auto 0 0; color: rgba(255,255,255,.68); text-align: center; }
+.set-entry-screen .entry-check { display: grid; place-items: center; width: 92px; height: 92px; margin: auto; border-radius: 50%; color: #143c32; background: #f4c177; font-size: 42px; font-weight: 900; }
 
 .summary-hero { text-align: center; padding: 12px 0 22px; }
 .check-ring {
@@ -393,6 +399,7 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 .week-row { margin-top: 17px; color: var(--muted); font-size: 11px; }
 .calendar-grid { row-gap: 6px; margin-top: 8px; }
 .calendar-day { position: relative; display: grid; place-items: center; height: 38px; border-radius: 12px; font-size: 12px; }
+.calendar-day { padding: 0; border: 0; color: var(--ink); background: transparent; }
 .calendar-day b { font-weight: 650; }
 .calendar-day.today { box-shadow: inset 0 0 0 1px var(--green-2); }
 .calendar-day.trained { color: white; background: var(--green); }
@@ -432,6 +439,29 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 .limit-field { display: grid; grid-template-columns: 1fr 100px; align-items: center; gap: 14px; }
 .limit-field span strong, .limit-field span small { display: block; }
 .limit-field span small { margin-top: 3px; color: var(--muted); }
+
+.compact-button { min-height: 38px; padding: 0 13px; border-radius: 12px; }
+.saved-note { margin: 0 0 12px; }
+.saved-note p:last-child { margin-bottom: 0; white-space: pre-wrap; line-height: 1.6; }
+.day-header { margin: 30px 0 18px; }
+.compact-empty { min-height: 280px; }
+.editor-card { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: white; }
+.editor-time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.editor-time-grid label > span, .editor-note > span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+.editor-time-grid input { width: 100%; height: 46px; padding: 0 8px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink); background: var(--paper); font-size: 12px; }
+.editor-note { display: block; margin-top: 13px; }
+.edit-exercises { display: grid; gap: 11px; }
+.edit-exercise-card { padding: 15px; }
+.mini-danger, .remove-set { border: 0; color: var(--danger); background: #fae9e7; }
+.mini-danger { padding: 7px 10px; border-radius: 10px; }
+.edit-set-list { display: grid; gap: 8px; margin: 14px 0; }
+.edit-set-row { display: grid; grid-template-columns: 24px 1fr 1fr; gap: 7px; align-items: end; padding: 10px; border-radius: 13px; background: var(--paper); }
+.edit-set-row > b { grid-row: span 2; align-self: center; color: var(--green); }
+.edit-set-row label span { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; }
+.edit-set-row input { width: 100%; min-width: 0; height: 36px; padding: 0 7px; border: 1px solid var(--line); border-radius: 9px; background: white; }
+.remove-set { width: 30px; height: 30px; align-self: center; border-radius: 9px; }
+.editor-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 18px; }
+.danger-button:disabled { opacity: .35; }
 .settings-list { margin-top: 26px; }
 .setting-card {
   display: flex;

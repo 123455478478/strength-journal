@@ -1,26 +1,37 @@
 # 力记 · Strength Journal
 
-一款面向个人使用的健身房力量训练记录 PWA。它不安排训练计划，也不要求注册账号，只负责准确记录实际完成的动作、重量、次数、时间和组间歇。
+一款面向个人使用的健身房力量训练记录 PWA。它不安排训练计划，也不要求注册账号，只负责准确记录训练总时长、动作、每组重量、次数、时间、组间歇和训练心得。
 
 **在线使用：** [https://123455478478.github.io/strength-journal/](https://123455478478.github.io/strength-journal/)
 
+## 别人如何使用
+
+1. 用手机或电脑浏览器打开上面的在线地址。
+2. 点击“开始健身”，应用从这一刻开始计算本次训练总时长。
+3. 进入动作库选择动作；尚未开始健身时不能添加动作。
+4. 在动作下点击“开始本组”，完成后点击“结束本组”。
+5. 本组结束后填写实际重量和完成次数并保存；开始、结束和组间歇时间由应用自动计算。
+6. 训练过程中可填写“本次训练记录”，记录感受、状态或下次需要调整的地方。
+7. 点击“结束健身”保存整次训练及总时长。
+8. 在“历史”日历中点击任意日期，可以查看、修改或补录当天的训练。
+
+无需下载、注册或配置服务器。记录默认保存在当前浏览器中，建议定期在“我的”页面导出 JSON 备份。
+
 ## 核心功能
 
-- 自由开始一场训练，按实际情况添加动作和训练组。
-- 每组通过“开始本组”和“完成本组”自动记录时间。
+- 明确的“开始健身 / 结束健身”流程，自动记录整次训练总时长。
+- 每个动作下逐组记录：开始本组 → 结束本组 → 填写重量与次数。
 - 自动计算每组持续时间、动作内组间歇和动作总用时。
-- 记录动作名称、目标肌群、重量、次数、组数和训练时间。
+- 每次训练可保存一段文字心得或备注。
+- 历史日历标记训练日；点击任意日期可新增、修改或删除当日记录。
 - 内置 54 个常见胸部、背部、肩部、手臂和腿部动作。
 - 每个动作提供负重倾向、常用次数范围和关键注意事项。
-- 根据最近训练记录和当前训练肌群实时排列建议动作。
-- 通过月历标记训练日期，并按时间回看完整记录。
-- 保存身高、体重、年龄、性别以及卧推、深蹲、引体向上和俯卧撑极限。
-- 支持 JSON 完整备份和 CSV 训练记录导出。
-- 支持添加到手机主屏幕，首次联网访问后可离线打开。
+- 根据最近训练记录和当前训练肌群实时排列建议动作，但不制定训练计划。
+- 保存身高、体重、年龄、性别及卧推、深蹲、引体向上和俯卧撑极限。
+- 支持 JSON 完整备份、恢复和 CSV 导出。
+- 支持安装到手机主屏幕，首次联网访问后可离线打开。
 
-## 计时方式
-
-应用使用每组的真实开始与结束时间计算训练数据：
+## 计时定义
 
 ```text
 本组持续时间 = 本组结束时间 - 本组开始时间
@@ -31,34 +42,27 @@
 
 即使锁屏、切换应用或关闭页面，重新打开后也会根据时间戳恢复计时状态。
 
-## 建议动作逻辑
-
-建议只改变动作排列，不会自动制定训练计划：
-
-- **第一组开始前：**读取前两次训练记录，避开上一次训练过的部位，优先显示最近覆盖较少的肌群。
-- **第一组开始后：**只推荐与最近开始动作属于同一肌群的相关动作。
-- **动作偏好：**在候选范围内，根据最近八次训练的使用频率排列常用动作。
-- 已经加入本次训练的动作不会重复推荐。
-
-全部计算都在浏览器本机完成。
-
 ## 界面预览
 
-| 实时建议 | 动作详情 |
+| 开始与建议动作 | 本组结束后填写 |
 | --- | --- |
-| ![实时建议](prototype/preview-suggestions.png) | ![动作详情](prototype/preview-exercise-detail.png) |
+| ![建议动作](prototype/preview-suggestions.png) | ![本组结束后填写](prototype/preview-set-entry.png) |
 
-| 历史日历 | 个人档案 |
+| 历史日历 | 修改或补录训练 |
 | --- | --- |
-| ![历史日历](prototype/preview-history.png) | ![个人档案](prototype/preview-profile.png) |
+| ![历史日历](prototype/preview-history.png) | ![修改历史记录](prototype/preview-history-edit.png) |
+
+| 动作详情 | 个人档案 |
+| --- | --- |
+| ![动作详情](prototype/preview-exercise-detail.png) | ![个人档案](prototype/preview-profile.png) |
 
 ## 数据与隐私
 
 - 不需要注册或登录。
 - 训练记录和个人档案默认只保存在当前浏览器的本地存储中。
-- GitHub Pages、GitHub 仓库和应用开发者都不会自动收到个人训练数据。
-- 不同设备和不同浏览器之间不会自动同步。
-- 清理浏览器站点数据会删除本地记录，建议定期导出 JSON 备份。
+- GitHub Pages、GitHub 仓库和开发者不会自动收到个人训练数据。
+- 不同设备和浏览器之间不会自动同步。
+- 清理浏览器站点数据会删除本地记录，请定期导出 JSON 备份。
 
 ## 安装到手机
 
@@ -74,38 +78,30 @@
 python -m http.server 4173
 ```
 
-然后访问：
-
-```text
-http://localhost:4173
-```
-
-直接打开 `index.html` 可以体验主要功能，但 Service Worker 和离线缓存需要通过 `http://localhost` 或 HTTPS 运行。
+然后访问 `http://localhost:4173`。直接打开 `index.html` 可以体验主要功能，但 Service Worker 和离线缓存需要通过 localhost 或 HTTPS 运行。
 
 ## 项目结构
 
 ```text
 strength-journal/
 ├── prototype/                   # 可直接部署的 PWA
-│   ├── index.html
-│   ├── app.js
-│   ├── styles.css
-│   ├── manifest.webmanifest
-│   ├── service-worker.js
-│   └── icon.svg
 ├── .github/workflows/           # GitHub Pages 自动部署
 ├── PRODUCT_DESIGN.md            # 产品设计
 ├── SOFTWARE_DESIGN.md           # 软件设计
 └── DEPLOYMENT.md                # 部署说明
 ```
 
-## 部署
+推送到 `main` 分支后，GitHub Actions 会将 `prototype` 目录自动发布到 GitHub Pages，详见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
-推送到 `main` 分支后，GitHub Actions 会将 `prototype` 目录自动发布到 GitHub Pages。详细说明见 [DEPLOYMENT.md](DEPLOYMENT.md)。
+## 参考项目与资料
 
-## 动作资料说明
+产品结构参考了开源健身记录项目中常见的“训练 → 动作 → 每组”数据层级和历史编辑方式：
 
-负重和次数倾向参考 ACSM 阻力训练指南的一般原则；动作执行要点参考 ACE Exercise Library 后整理为简短中文提示。这些内容仅用于一般健身信息展示，不替代教练评估、康复指导或医疗建议。
+- [Iron](https://github.com/kabouzeid/Iron)
+- [Workout Tracker](https://github.com/jkaho/workout-tracker)
+- [wger](https://github.com/wger-project/wger)
+
+动作负重和次数倾向参考 ACSM 阻力训练的一般原则；动作执行要点参考 ACE Exercise Library 后整理为简短中文提示。内容仅用于一般健身信息展示，不替代教练评估、康复指导或医疗建议。
 
 - [ACSM Resistance Training Guidelines](https://acsm.org/resistance-training-guidelines-update-2026/)
 - [ACE Exercise Library](https://www.acefitness.org/resources/everyone/exercise-library/equipment/)

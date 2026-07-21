@@ -70,8 +70,9 @@ const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿"];
 
 function emptyState() {
   return {
-    version: 3, screen: "train", activeExercise: 0, activeDetailId: null,
+    version: 4, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
+    editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
   };
 }
@@ -84,7 +85,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 3, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 4, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -112,8 +113,12 @@ function dateLabel(timestamp) {
   return new Date(timestamp).toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "short" });
 }
 
-function createWorkout() {
-  return { id: `workout-${now()}`, startedAt: now(), endedAt: null, exercises: [], note: "" };
+function escapeHtml(value = "") {
+  return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
+}
+
+function createWorkout(startedAt = now()) {
+  return { id: `workout-${startedAt}`, startedAt, endedAt: null, exercises: [], note: "" };
 }
 
 function createExercise(source) {
@@ -228,10 +233,10 @@ function renderTrainHome() {
       </div>
       <article class="hero-card">
         <p class="eyebrow">${active ? "训练进行中" : "自由训练"}</p>
-        <h2>${active ? "继续本次训练" : "今天练什么，由你决定"}</h2>
-        <p class="subtle">${active ? `${state.workout.exercises.length} 个动作 · ${completedSetCount()} 个完成组` : "开始后再添加动作，不需要预先安排。"}</p>
+        <h2>${active ? "继续本次训练" : "准备好后开始计时"}</h2>
+        <p class="subtle">${active ? `${state.workout.exercises.length} 个动作 · ${completedSetCount()} 个完成组` : "点击开始健身后计时，再选择本次实际训练的动作。"}</p>
         ${active ? `<div class="metric-grid"><div class="metric"><strong>${state.workout.exercises.length}</strong><span>动作</span></div><div class="metric"><strong>${completedSetCount()}</strong><span>完成组</span></div><div class="metric"><strong class="mono">${formatDuration(workoutElapsed())}</strong><span>已训练</span></div></div>` : ""}
-        <button class="primary" data-action="start-workout">${active ? "继续训练" : "开始自由训练"}</button>
+        <button class="primary" data-action="start-workout">${active ? "继续健身" : "开始健身"}</button>
       </article>
       <div class="between section-title"><div><p class="eyebrow">实时建议</p><h3>建议动作</h3></div><button class="text-button" data-nav="exercises">全部动作</button></div>
       <div class="quick-grid">
@@ -256,11 +261,12 @@ function renderWorkout() {
   return `
     <section class="screen focus">
       <header class="focus-header">
-        <div class="between"><button class="icon-button" data-action="go-train">×</button><div><p class="eyebrow">自由训练</p><h2>${dateLabel(workout.startedAt)}</h2></div><strong class="focus-clock mono" data-live="workout">${formatDuration(workoutElapsed())}</strong></div>
+        <div class="between"><button class="icon-button" data-action="go-train">×</button><div><p class="eyebrow">健身进行中</p><h2>${dateLabel(workout.startedAt)}</h2></div><strong class="focus-clock mono" data-live="workout">${formatDuration(workoutElapsed())}</strong></div>
         <p class="subtle">${workout.exercises.length} 个动作 · ${completedSetCount()} 个完成组</p>
       </header>
       ${workout.exercises.length ? `<div class="exercise-list">${workout.exercises.map((ex, index) => exerciseListItem(ex, index)).join("")}</div>` : `<div class="workout-empty"><div class="empty-icon">＋</div><h2>先添加一个动作</h2><p class="subtle">自由训练没有预设内容，只记录你今天实际练的动作。</p></div>`}
-      <div class="actions"><button class="secondary" data-action="open-library">添加动作</button><button class="primary" data-action="finish-workout">完成训练</button></div>
+      <article class="workout-note-card"><label for="workout-note">本次训练记录</label><textarea id="workout-note" data-workout-note placeholder="记录训练感受、状态、动作心得……">${escapeHtml(workout.note)}</textarea><small>输入内容会自动保存</small></article>
+      <div class="actions"><button class="secondary" data-action="open-library">添加动作</button><button class="primary" data-action="finish-workout">结束健身</button></div>
     </section>`;
 }
 
@@ -339,48 +345,65 @@ function renderActiveSet() {
   return `<section class="active-set-screen">
     <div class="between"><div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${index + 1} 组 · 进行中</h2></div><span class="chip">${ex.muscles[0]}</span></div>
     <div class="active-timer mono" data-live="set">${formatDuration(secondsBetween(set.startedAt, now()))}</div>
-    <div class="input-grid">
-      <div class="number-box"><label for="weight">重量</label><div class="number-wrap"><input id="weight" type="number" inputmode="decimal" step="0.5" value="${set.weight}"><span>${state.unit}</span></div></div>
-      <div class="number-box"><label for="reps">次数</label><div class="number-wrap"><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>次</span></div></div>
-    </div>
-    <button class="primary complete-set full" data-action="complete-set">完成本组</button>
+    <p class="active-hint">完成动作后再填写本组重量和次数</p>
+    <button class="primary complete-set full" data-action="end-set">结束本组</button>
     <button class="cancel-link" data-action="cancel-set">取消本组</button>
   </section>`;
 }
 
+function renderSetEntry() {
+  const ex = state.workout?.exercises[state.activeExercise];
+  const set = ex?.sets[state.pendingSetIndex];
+  if (!set?.endedAt) { state.screen = "exercise"; return renderExercise(); }
+  return `<section class="active-set-screen set-entry-screen">
+    <div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${state.pendingSetIndex + 1} 组已结束</h2><p class="subtle">${clockTime(set.startedAt)}–${clockTime(set.endedAt)} · 本组 ${formatDuration(secondsBetween(set.startedAt, set.endedAt))}</p></div>
+    <div class="entry-check">✓</div>
+    <div class="input-grid">
+      <div class="number-box"><label for="weight">本组重量</label><div class="number-wrap"><input id="weight" type="number" inputmode="decimal" step="0.5" value="${set.weight}"><span>${state.unit}</span></div></div>
+      <div class="number-box"><label for="reps">完成次数</label><div class="number-wrap"><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>次</span></div></div>
+    </div>
+    <button class="primary complete-set full" data-action="save-set">保存本组</button>
+    <button class="cancel-link" data-action="undo-end-set">返回继续计时</button>
+  </section>`;
+}
+
 function renderLibrary() {
+  const selectingHistory = state.libraryContext === "history-edit";
+  const selectionTarget = selectingHistory ? state.editingWorkout : state.workout;
   const q = state.query.trim().toLowerCase();
   const results = catalogue.filter(ex => ex.group === state.groupFilter && `${ex.name}${ex.subgroup}${ex.muscles.join("")}${ex.equipment}`.toLowerCase().includes(q));
   const subgrouped = results.reduce((groups, ex) => {
     (groups[ex.subgroup] ||= []).push(ex);
     return groups;
   }, {});
-  return `<section class="screen ${state.workout ? "focus" : ""}">
-    <div class="between"><div><p class="eyebrow">动作库</p><h1>${state.workout ? "添加动作" : "按肌群查找"}</h1></div>${state.workout ? `<button class="icon-button" data-action="back-workout">×</button>` : ""}</div>
+  return `<section class="screen ${selectionTarget ? "focus" : ""}">
+    <div class="between"><div><p class="eyebrow">动作库</p><h1>${selectionTarget ? "添加动作" : "按肌群查找"}</h1></div>${selectionTarget ? `<button class="icon-button" data-action="${selectingHistory ? "back-history-editor" : "back-workout"}">×</button>` : ""}</div>
     <div class="search-box"><span>⌕</span><input id="exercise-search" type="search" placeholder="搜索名称、肌群或器械" value="${state.query}"></div>
     <div class="muscle-tabs">${muscleGroups.map(group => `<button class="${group === state.groupFilter ? "selected" : ""}" data-group="${group}">${group}</button>`).join("")}</div>
     <div class="group-summary"><strong>${state.groupFilter}</strong><span>${results.length} 个动作 · ${Object.keys(subgrouped).length} 个分类</span></div>
     <div class="library-groups">${Object.entries(subgrouped).map(([subgroup, items]) => `<section class="subgroup"><h3>${subgroup}</h3><div class="library-list">${items.map(ex => libraryItem(ex)).join("")}</div></section>`).join("") || `<div class="workout-empty"><h3>没有找到动作</h3><p class="subtle">尝试其他关键词或肌群。</p></div>`}</div>
-    ${!state.workout ? nav("exercises") : ""}
+    ${!selectionTarget ? nav("exercises") : ""}
   </section>`;
 }
 
 function libraryItem(ex) {
-  const added = state.workout?.exercises.some(item => item.id === ex.id);
+  const target = state.libraryContext === "history-edit" ? state.editingWorkout : state.workout;
+  const added = target?.exercises.some(item => item.id === ex.id);
   return `<article class="library-item"><button class="library-main" data-detail-id="${ex.id}"><span class="exercise-avatar">${ex.name.slice(0, 1)}</span><span><strong>${ex.name}</strong><small>${ex.muscles.join(" / ")} · ${ex.equipment}</small></span></button><button class="add-circle ${added ? "added" : ""}" data-add-exercise="${ex.id}" ${added ? "disabled" : ""}>${added ? "✓" : "＋"}</button></article>`;
 }
 
 function renderExerciseDetail() {
   const ex = catalogue.find(item => item.id === state.activeDetailId);
   if (!ex) { state.screen = "exercises"; return renderLibrary(); }
-  const added = state.workout?.exercises.some(item => item.id === ex.id);
+  const target = state.libraryContext === "history-edit" ? state.editingWorkout : state.workout;
+  const added = target?.exercises.some(item => item.id === ex.id);
   return `<section class="screen focus detail-screen">
     <button class="icon-button" data-action="back-library">‹</button>
     <div class="detail-hero"><span class="detail-group">${ex.group} · ${ex.subgroup}</span><h1>${ex.name}</h1><p>${ex.equipment} · ${ex.muscles.join(" / ")}</p></div>
     <div class="guidance-grid"><article><span>负重倾向</span><strong>${ex.load}</strong></article><article><span>常用次数</span><strong>${ex.reps}</strong></article></div>
     <article class="card tip-card"><p class="eyebrow">训练要点</p><ul>${ex.tips.map(tip => `<li>${tip}</li>`).join("")}</ul></article>
     <article class="source-note"><strong>使用提示</strong><p>重量与次数是一般参考范围。优先选择能保持动作控制的重量；出现疼痛、眩晕或异常不适时停止训练。</p><p class="reference-links"><a href="https://acsm.org/resistance-training-guidelines-update-2026/" target="_blank" rel="noreferrer">ACSM 阻力训练指南</a><a href="https://www.acefitness.org/resources/everyone/exercise-library/equipment/" target="_blank" rel="noreferrer">ACE 动作库</a></p></article>
-    <div class="sticky-action"><button class="primary full" data-add-exercise="${ex.id}" ${added ? "disabled" : ""}>${added ? "已加入本次训练" : state.workout ? "加入本次训练" : "开始训练并加入"}</button></div>
+    <div class="sticky-action"><button class="primary full" data-add-exercise="${ex.id}" ${added ? "disabled" : ""}>${added ? "已加入记录" : target ? "加入训练记录" : "请先开始健身"}</button></div>
   </section>`;
 }
 
@@ -406,7 +429,7 @@ function calendarHtml() {
     const key = `${year}-${month + 1}-${day}`;
     const isToday = day === today.getDate();
     const isTrained = trained.has(key);
-    cells.push(`<span class="calendar-day ${isToday ? "today" : ""} ${isTrained ? "trained" : ""}"><b>${day}</b>${isTrained ? "<i></i>" : ""}</span>`);
+    cells.push(`<button class="calendar-day ${isToday ? "today" : ""} ${isTrained ? "trained" : ""}" data-calendar-date="${key}"><b>${day}</b>${isTrained ? "<i></i>" : ""}</button>`);
   }
   return `<article class="calendar-card"><div class="between"><h3>${year} 年 ${month + 1} 月</h3><span class="subtle">● 有训练记录</span></div><div class="week-row">${["日", "一", "二", "三", "四", "五", "六"].map(day => `<span>${day}</span>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div></article>`;
 }
@@ -419,13 +442,67 @@ function renderHistory() {
   </section>${nav("history")}`;
 }
 
+function dateFromKey(key, hour = 12, minute = 0) {
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(year, month - 1, day, hour, minute).getTime();
+}
+
+function workoutsForDate(key) {
+  return state.history.filter(workout => localDateKey(workout.startedAt) === key);
+}
+
+function fullDateLabel(key) {
+  return new Date(dateFromKey(key)).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+}
+
+function renderDayDetail() {
+  const key = state.editingDateKey || localDateKey(now());
+  const workouts = workoutsForDate(key);
+  return `<section class="screen focus">
+    <div class="between"><button class="icon-button" data-action="back-history">‹</button><span class="chip">${workouts.length} 次</span></div>
+    <header class="day-header"><p class="eyebrow">训练日期</p><h1>${fullDateLabel(key)}</h1><p class="subtle">可以打开已有训练进行修改，也可以补录当天训练。</p></header>
+    ${workouts.length ? `<div class="history-list">${workouts.map(recentWorkoutCard).join("")}</div>` : `<div class="workout-empty compact-empty"><div class="empty-icon">＋</div><h2>当天没有记录</h2><p class="subtle">可以手动补录动作、组数、重量、次数和时间。</p></div>`}
+    <button class="primary full" style="margin-top:18px" data-action="new-day-workout">新增当日训练</button>
+  </section>`;
+}
+
+function datetimeInputValue(timestamp) {
+  if (!timestamp) return "";
+  const date = new Date(timestamp - new Date(timestamp).getTimezoneOffset() * 60000);
+  return date.toISOString().slice(0, 16);
+}
+
+function timeInputValue(timestamp) {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+}
+
+function renderHistoryEditor() {
+  const workout = state.editingWorkout;
+  if (!workout) { state.screen = "history"; return renderHistory(); }
+  return `<section class="screen focus history-editor">
+    <div class="between"><button class="icon-button" data-action="cancel-history-edit">×</button><span class="save-state">修改仅在保存后生效</span></div>
+    <header class="day-header"><p class="eyebrow">${state.editingHistoryId ? "修改训练记录" : "新增训练记录"}</p><h1>${fullDateLabel(localDateKey(workout.startedAt))}</h1></header>
+    <article class="editor-card"><div class="editor-time-grid"><label><span>开始健身</span><input type="datetime-local" data-edit-session="startedAt" value="${datetimeInputValue(workout.startedAt)}"></label><label><span>结束健身</span><input type="datetime-local" data-edit-session="endedAt" value="${datetimeInputValue(workout.endedAt)}"></label></div><label class="editor-note"><span>训练心得</span><textarea data-edit-note placeholder="记录当天状态、感受或动作心得……">${escapeHtml(workout.note)}</textarea></label></article>
+    <div class="between section-title"><div><p class="eyebrow">动作与组</p><h3>${workout.exercises.length} 个动作</h3></div><button class="text-button" data-action="edit-add-exercise">添加动作</button></div>
+    <div class="edit-exercises">${workout.exercises.map((ex, exIndex) => editExerciseCard(ex, exIndex)).join("") || `<div class="card empty-card"><strong>还没有动作</strong><p class="subtle">点击“添加动作”从动作库选择。</p></div>`}</div>
+    <div class="editor-actions"><button class="danger-button" data-action="delete-history-workout" ${state.editingHistoryId ? "" : "disabled"}>删除记录</button><button class="primary" data-action="save-history-workout">保存记录</button></div>
+  </section>`;
+}
+
+function editExerciseCard(ex, exIndex) {
+  return `<article class="card edit-exercise-card"><div class="between"><div><h3>${ex.name}</h3><p class="subtle">${ex.group || ex.muscles[0]} · ${ex.sets.length} 组</p></div><button class="mini-danger" data-edit-remove-exercise="${exIndex}">删除</button></div><div class="edit-set-list">${ex.sets.map((set, setIndex) => `<div class="edit-set-row"><b>${setIndex + 1}</b><label><span>重量</span><input type="number" step="0.5" value="${set.weight}" data-edit-set="${exIndex}:${setIndex}:weight"></label><label><span>次数</span><input type="number" step="1" value="${set.reps}" data-edit-set="${exIndex}:${setIndex}:reps"></label><label><span>开始</span><input type="time" step="1" value="${timeInputValue(set.startedAt)}" data-edit-set="${exIndex}:${setIndex}:startedAt"></label><label><span>结束</span><input type="time" step="1" value="${timeInputValue(set.endedAt)}" data-edit-set="${exIndex}:${setIndex}:endedAt"></label><button class="remove-set" data-edit-remove-set="${exIndex}:${setIndex}">×</button></div>`).join("")}</div><button class="secondary compact-button" data-edit-add-set="${exIndex}">＋ 添加一组</button></article>`;
+}
+
 function renderHistoryDetail() {
   const workout = state.summary;
   if (!workout) { state.screen = "history"; return renderHistory(); }
   return `<section class="screen focus">
-    <div class="between"><button class="icon-button" data-action="back-history">‹</button><span class="chip">已保存</span></div>
+    <div class="between"><button class="icon-button" data-action="back-history">‹</button><button class="secondary compact-button" data-action="edit-history">编辑记录</button></div>
     <div class="summary-hero"><p class="eyebrow">训练记录</p><h1>${dateLabel(workout.startedAt)}</h1><p class="subtle">${clockTime(workout.startedAt)}–${clockTime(workout.endedAt)}</p></div>
     ${summaryStats(workout)}
+    ${workout.note ? `<article class="card saved-note"><p class="eyebrow">训练记录</p><p>${escapeHtml(workout.note)}</p></article>` : ""}
     <div class="summary-list">${workout.exercises.map(summaryExerciseCard).join("")}</div>
   </section>`;
 }
@@ -442,7 +519,7 @@ function summaryExerciseCard(ex) {
 
 function renderSummary() {
   const workout = state.summary;
-  return `<section class="screen focus"><div class="summary-hero"><div class="check-ring">✓</div><p class="eyebrow">记录已保存</p><h1>训练完成</h1><p class="subtle">${dateLabel(workout.startedAt)}</p></div>${summaryStats(workout)}<div class="summary-list">${workout.exercises.map(summaryExerciseCard).join("")}</div><button class="primary full" style="margin-top:18px" data-action="close-summary">完成</button></section>`;
+  return `<section class="screen focus"><div class="summary-hero"><div class="check-ring">✓</div><p class="eyebrow">记录已保存</p><h1>健身结束</h1><p class="subtle">${dateLabel(workout.startedAt)} · ${clockTime(workout.startedAt)}–${clockTime(workout.endedAt)}</p></div>${summaryStats(workout)}${workout.note ? `<article class="card saved-note"><p class="eyebrow">训练记录</p><p>${escapeHtml(workout.note)}</p></article>` : ""}<div class="summary-list">${workout.exercises.map(summaryExerciseCard).join("")}</div><button class="primary full" style="margin-top:18px" data-action="close-summary">完成</button></section>`;
 }
 
 function renderProfile() {
@@ -471,6 +548,14 @@ function limitField(key, label, unit, hint) {
   return `<label class="limit-field"><span><strong>${label}</strong><small>${hint}</small></span><div><input data-profile="${key}" type="number" inputmode="decimal" value="${state.profile[key]}"><em>${unit}</em></div></label>`;
 }
 
+function timestampFromTime(value, baseTimestamp) {
+  if (!value) return null;
+  const [hours, minutes, seconds = 0] = value.split(":").map(Number);
+  const date = new Date(baseTimestamp);
+  date.setHours(hours, minutes, seconds, 0);
+  return date.getTime();
+}
+
 function render() {
   clearInterval(tickHandle);
   const app = document.getElementById("app");
@@ -478,10 +563,13 @@ function render() {
   else if (state.screen === "workout") app.innerHTML = renderWorkout();
   else if (state.screen === "exercise") app.innerHTML = renderExercise();
   else if (state.screen === "active-set") app.innerHTML = renderActiveSet();
+  else if (state.screen === "set-entry") app.innerHTML = renderSetEntry();
   else if (state.screen === "exercises") app.innerHTML = renderLibrary();
   else if (state.screen === "exercise-detail") app.innerHTML = renderExerciseDetail();
   else if (state.screen === "history") app.innerHTML = renderHistory();
   else if (state.screen === "history-detail") app.innerHTML = renderHistoryDetail();
+  else if (state.screen === "day-detail") app.innerHTML = renderDayDetail();
+  else if (state.screen === "history-edit") app.innerHTML = renderHistoryEditor();
   else if (state.screen === "summary") app.innerHTML = renderSummary();
   else if (state.screen === "profile") app.innerHTML = renderProfile();
   bindEvents();
@@ -492,21 +580,56 @@ function bindEvents() {
   document.querySelectorAll("[data-nav]").forEach(el => el.addEventListener("click", () => { state.screen = el.dataset.nav; saveState(); render(); }));
   document.querySelectorAll("[data-open-exercise]").forEach(el => el.addEventListener("click", () => { state.activeExercise = Number(el.dataset.openExercise); state.screen = "exercise"; saveState(); render(); }));
   document.querySelectorAll("[data-add-exercise]").forEach(el => el.addEventListener("click", () => addExercise(el.dataset.addExercise)));
-  document.querySelectorAll("[data-quick-add]").forEach(el => el.addEventListener("click", () => { if (!state.workout) state.workout = createWorkout(); addExercise(el.dataset.quickAdd); }));
+  document.querySelectorAll("[data-quick-add]").forEach(el => el.addEventListener("click", () => { if (!state.workout) return toast("请先点击开始健身"); addExercise(el.dataset.quickAdd); }));
   document.querySelectorAll("[data-history-id]").forEach(el => el.addEventListener("click", () => { state.summary = state.history.find(w => w.id === el.dataset.historyId); state.screen = "history-detail"; saveState(); render(); }));
+  document.querySelectorAll("[data-calendar-date]").forEach(el => el.addEventListener("click", () => { state.editingDateKey = el.dataset.calendarDate; state.screen = "day-detail"; saveState(); render(); }));
   document.querySelectorAll("[data-unit]").forEach(el => el.addEventListener("click", () => { state.unit = el.dataset.unit; saveState(); render(); }));
   document.querySelectorAll("[data-group]").forEach(el => el.addEventListener("click", () => { state.groupFilter = el.dataset.group; state.query = ""; saveState(); render(); }));
   document.querySelectorAll("[data-detail-id]").forEach(el => el.addEventListener("click", () => { state.activeDetailId = el.dataset.detailId; state.screen = "exercise-detail"; saveState(); render(); }));
   document.querySelectorAll("[data-gender]").forEach(el => el.addEventListener("click", () => { state.profile.gender = el.dataset.gender; saveState(); render(); }));
   document.querySelectorAll("[data-profile]").forEach(el => el.addEventListener("input", () => { state.profile[el.dataset.profile] = el.value; saveState(); }));
+  document.querySelectorAll("[data-workout-note]").forEach(el => el.addEventListener("input", () => { if (state.workout) { state.workout.note = el.value; saveState(); } }));
+  document.querySelectorAll("[data-edit-session]").forEach(el => el.addEventListener("input", () => { const value = new Date(el.value).getTime(); if (Number.isFinite(value)) { state.editingWorkout[el.dataset.editSession] = value; saveState(); } }));
+  document.querySelectorAll("[data-edit-note]").forEach(el => el.addEventListener("input", () => { state.editingWorkout.note = el.value; saveState(); }));
+  document.querySelectorAll("[data-edit-set]").forEach(el => el.addEventListener("input", () => {
+    const [exIndex, setIndex, field] = el.dataset.editSet.split(":");
+    const set = state.editingWorkout.exercises[Number(exIndex)].sets[Number(setIndex)];
+    set[field] = field === "weight" ? Math.max(0, Number(el.value) || 0) : field === "reps" ? Math.max(0, Math.round(Number(el.value) || 0)) : timestampFromTime(el.value, state.editingWorkout.startedAt);
+    saveState();
+  }));
+  document.querySelectorAll("[data-edit-add-set]").forEach(el => el.addEventListener("click", () => {
+    const ex = state.editingWorkout.exercises[Number(el.dataset.editAddSet)];
+    const last = ex.sets.at(-1);
+    const startedAt = (last.endedAt || state.editingWorkout.startedAt) + 120000;
+    ex.sets.push({ weight: last.weight, reps: last.reps, startedAt, endedAt: startedAt + 30000 });
+    saveState(); render();
+  }));
+  document.querySelectorAll("[data-edit-remove-set]").forEach(el => el.addEventListener("click", () => {
+    const [exIndex, setIndex] = el.dataset.editRemoveSet.split(":").map(Number);
+    state.editingWorkout.exercises[exIndex].sets.splice(setIndex, 1);
+    saveState(); render();
+  }));
+  document.querySelectorAll("[data-edit-remove-exercise]").forEach(el => el.addEventListener("click", () => { state.editingWorkout.exercises.splice(Number(el.dataset.editRemoveExercise), 1); saveState(); render(); }));
   document.querySelectorAll("[data-action]").forEach(el => el.addEventListener("click", () => handleAction(el.dataset.action, el)));
   document.getElementById("exercise-search")?.addEventListener("input", event => { state.query = event.target.value; saveState(); render(); document.getElementById("exercise-search")?.focus(); });
 }
 
 function addExercise(id) {
-  if (!state.workout) state.workout = createWorkout();
-  if (state.workout.exercises.some(ex => ex.id === id)) return;
   const source = catalogue.find(ex => ex.id === id);
+  if (state.libraryContext === "history-edit" && state.editingWorkout) {
+    if (state.editingWorkout.exercises.some(ex => ex.id === id)) return;
+    const exercise = createExercise(source);
+    const previousEnd = state.editingWorkout.exercises.flatMap(ex => ex.sets).map(set => set.endedAt || 0).sort((a, b) => b - a)[0];
+    const setStart = Math.max(state.editingWorkout.startedAt, previousEnd ? previousEnd + 120000 : state.editingWorkout.startedAt);
+    exercise.sets[0].startedAt = setStart;
+    exercise.sets[0].endedAt = setStart + 30000;
+    state.editingWorkout.exercises.push(exercise);
+    state.libraryContext = null;
+    state.screen = "history-edit";
+    saveState(); return render();
+  }
+  if (!state.workout) return toast("请先点击开始健身");
+  if (state.workout.exercises.some(ex => ex.id === id)) return;
   state.workout.exercises.push(createExercise(source));
   state.activeExercise = state.workout.exercises.length - 1;
   state.screen = "exercise";
@@ -520,6 +643,51 @@ function handleAction(action, el) {
   if (action === "back-workout") { state.screen = "workout"; saveState(); return render(); }
   if (action === "open-library") { state.screen = "exercises"; saveState(); return render(); }
   if (action === "back-library") { state.screen = "exercises"; saveState(); return render(); }
+  if (action === "back-history-editor") { state.libraryContext = null; state.screen = "history-edit"; saveState(); return render(); }
+  if (action === "new-day-workout") {
+    const startedAt = dateFromKey(state.editingDateKey, 18, 0);
+    state.editingHistoryId = null;
+    state.editingWorkout = { ...createWorkout(startedAt), endedAt: startedAt + 3600000 };
+    state.screen = "history-edit";
+    saveState(); return render();
+  }
+  if (action === "edit-history") {
+    state.editingHistoryId = state.summary.id;
+    state.editingWorkout = JSON.parse(JSON.stringify(state.summary));
+    state.editingDateKey = localDateKey(state.summary.startedAt);
+    state.screen = "history-edit";
+    saveState(); return render();
+  }
+  if (action === "cancel-history-edit") { state.editingWorkout = null; state.editingHistoryId = null; state.libraryContext = null; state.screen = "day-detail"; saveState(); return render(); }
+  if (action === "edit-add-exercise") { state.libraryContext = "history-edit"; state.screen = "exercises"; saveState(); return render(); }
+  if (action === "save-history-workout") {
+    const edited = state.editingWorkout;
+    if (!edited || !edited.startedAt || !edited.endedAt || edited.endedAt <= edited.startedAt) return toast("请检查健身开始和结束时间");
+    if (!edited.exercises.length || !edited.exercises.some(ex => ex.sets.some(set => set.startedAt && set.endedAt))) return toast("请至少添加一个动作和一组记录");
+    for (const ex of edited.exercises) {
+      for (const set of ex.sets) if (set.startedAt && set.endedAt && set.endedAt <= set.startedAt) return toast("每组结束时间必须晚于开始时间");
+    }
+    const saved = JSON.parse(JSON.stringify(edited));
+    if (state.editingHistoryId) state.history = state.history.map(workout => workout.id === state.editingHistoryId ? saved : workout);
+    else state.history.push(saved);
+    state.history.sort((a, b) => b.startedAt - a.startedAt);
+    state.editingDateKey = localDateKey(saved.startedAt);
+    state.editingWorkout = null;
+    state.editingHistoryId = null;
+    state.libraryContext = null;
+    state.summary = null;
+    state.screen = "day-detail";
+    saveState(); return render();
+  }
+  if (action === "delete-history-workout") {
+    if (!state.editingHistoryId || !confirm("删除这次训练记录？删除后无法恢复。")) return;
+    state.history = state.history.filter(workout => workout.id !== state.editingHistoryId);
+    state.editingWorkout = null;
+    state.editingHistoryId = null;
+    state.summary = null;
+    state.screen = "day-detail";
+    saveState(); return render();
+  }
   if (action === "add-set") {
     const ex = state.workout.exercises[state.activeExercise];
     const last = ex.sets.at(-1);
@@ -535,13 +703,29 @@ function handleAction(action, el) {
     saveState(); return render();
   }
   if (action === "resume-set") { state.screen = "active-set"; saveState(); return render(); }
-  if (action === "complete-set") {
+  if (action === "end-set") {
     const ex = state.workout.exercises[state.activeExercise];
-    const set = ex.sets.find(item => item.startedAt && !item.endedAt);
+    const index = ex.sets.findIndex(item => item.startedAt && !item.endedAt);
+    const set = ex.sets[index];
+    set.endedAt = now();
+    state.pendingSetIndex = index;
+    state.screen = "set-entry";
+    saveState(); return render();
+  }
+  if (action === "save-set") {
+    const ex = state.workout.exercises[state.activeExercise];
+    const set = ex.sets[state.pendingSetIndex];
     set.weight = Math.max(0, Number(document.getElementById("weight").value) || 0);
     set.reps = Math.max(0, Math.round(Number(document.getElementById("reps").value) || 0));
-    set.endedAt = now();
+    state.pendingSetIndex = null;
     state.screen = "exercise";
+    saveState(); return render();
+  }
+  if (action === "undo-end-set") {
+    const set = state.workout.exercises[state.activeExercise].sets[state.pendingSetIndex];
+    set.endedAt = null;
+    state.pendingSetIndex = null;
+    state.screen = "active-set";
     saveState(); return render();
   }
   if (action === "cancel-set") {
@@ -574,11 +758,11 @@ function handleAction(action, el) {
 }
 
 function exportCsv() {
-  const rows = [["训练日期", "动作", "主要肌群", "组序号", "重量", "单位", "次数", "组开始", "组结束", "本组秒数", "组间歇秒数"]];
+  const rows = [["训练日期", "训练心得", "动作", "主要肌群", "组序号", "重量", "单位", "次数", "组开始", "组结束", "本组秒数", "组间歇秒数"]];
   state.history.slice().reverse().forEach(workout => workout.exercises.forEach(ex => {
     const done = ex.sets.filter(set => set.endedAt);
     done.forEach((set, index) => rows.push([
-      new Date(workout.startedAt).toLocaleString("zh-CN"), ex.name, ex.muscles.join("/"), index + 1,
+      new Date(workout.startedAt).toLocaleString("zh-CN"), workout.note || "", ex.name, ex.muscles.join("/"), index + 1,
       set.weight, state.unit, set.reps, new Date(set.startedAt).toLocaleString("zh-CN"), new Date(set.endedAt).toLocaleString("zh-CN"),
       secondsBetween(set.startedAt, set.endedAt), index ? secondsBetween(done[index - 1].endedAt, set.startedAt) : ""
     ]));
