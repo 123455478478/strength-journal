@@ -115,6 +115,9 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 .primary { color: white; background: var(--green); }
 .primary.amber { background: var(--amber); color: #24180c; }
 .hero-card .primary { width: 100%; margin-top: 22px; background: white; color: var(--green); }
+.hero-actions { display: grid; grid-template-columns: 1.35fr 1fr; gap: 9px; margin-top: 22px; }
+.hero-card .hero-actions .primary { margin-top: 0; }
+.hero-end { min-height: 52px; padding: 0 12px; border: 1px solid rgba(255,255,255,.22); border-radius: 16px; color: white; background: #b9473d; font-weight: 800; }
 .secondary { color: var(--green); background: var(--green-soft); }
 .danger-button { color: var(--danger); background: #fae9e7; }
 .full { width: 100%; }
@@ -163,6 +166,10 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 .quick-exercise em { display: block; margin-top: 4px; color: var(--green-2); font-size: 11px; font-style: normal; font-weight: 750; }
 .empty-card { text-align: left; }
 .recent-record { width: 100%; text-align: left; color: var(--ink); }
+.swipe-record { position: relative; overflow: hidden; border-radius: 18px; background: #b9473d; }
+.swipe-record .recent-record { position: relative; z-index: 2; margin: 0; transition: transform .2s ease; touch-action: pan-y; }
+.swipe-delete { position: absolute; z-index: 1; inset: 0 0 0 auto; width: 84px; border: 0; color: white; background: #b9473d; font-weight: 800; }
+.swipe-record.open .recent-record { transform: translateX(-84px); }
 .record-exercises { display: grid; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .record-exercises div { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; }
 .record-exercises b { color: var(--ink); }
@@ -239,6 +246,8 @@ h3 { margin-bottom: 5px; font-size: 17px; }
   padding: 30px;
   text-align: center;
 }
+.clickable-empty { width: 100%; border: 0; color: var(--ink); background: transparent; cursor: pointer; }
+.clickable-empty:active .empty-icon { transform: scale(.94); }
 .workout-empty.tall { min-height: 60vh; }
 .empty-icon {
   display: grid;
@@ -442,6 +451,7 @@ h3 { margin-bottom: 5px; font-size: 17px; }
 
 .compact-button { min-height: 38px; padding: 0 13px; border-radius: 12px; }
 .saved-note { margin: 0 0 12px; }
+.summary-note { margin: 0 0 18px; }
 .saved-note p:last-child { margin-bottom: 0; white-space: pre-wrap; line-height: 1.6; }
 .day-header { margin: 30px 0 18px; }
 .compact-empty { min-height: 280px; }

@@ -70,7 +70,7 @@ const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿"];
 
 function emptyState() {
   return {
-    version: 4, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
+    version: 5, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
     editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
@@ -85,7 +85,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 4, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 5, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -235,8 +235,8 @@ function renderTrainHome() {
         <p class="eyebrow">${active ? "训练进行中" : "自由训练"}</p>
         <h2>${active ? "继续本次训练" : "准备好后开始计时"}</h2>
         <p class="subtle">${active ? `${state.workout.exercises.length} 个动作 · ${completedSetCount()} 个完成组` : "点击开始健身后计时，再选择本次实际训练的动作。"}</p>
-        ${active ? `<div class="metric-grid"><div class="metric"><strong>${state.workout.exercises.length}</strong><span>动作</span></div><div class="metric"><strong>${completedSetCount()}</strong><span>完成组</span></div><div class="metric"><strong class="mono">${formatDuration(workoutElapsed())}</strong><span>已训练</span></div></div>` : ""}
-        <button class="primary" data-action="start-workout">${active ? "继续健身" : "开始健身"}</button>
+        ${active ? `<div class="metric-grid"><div class="metric"><strong>${state.workout.exercises.length}</strong><span>动作</span></div><div class="metric"><strong>${completedSetCount()}</strong><span>完成组</span></div><div class="metric"><strong class="mono" data-live="workout">${formatDuration(workoutElapsed())}</strong><span>已训练</span></div></div>` : ""}
+        ${active ? `<div class="hero-actions"><button class="primary" data-action="start-workout">继续健身</button><button class="hero-end" data-action="finish-workout">结束健身</button></div>` : `<button class="primary" data-action="start-workout">开始健身</button>`}
       </article>
       <div class="between section-title"><div><p class="eyebrow">实时建议</p><h3>建议动作</h3></div><button class="text-button" data-nav="exercises">全部动作</button></div>
       <div class="quick-grid">
@@ -249,10 +249,10 @@ function renderTrainHome() {
 
 function recentWorkoutCard(workout) {
   const muscles = workoutMuscleSummary(workout);
-  return `<button class="card recent-record" data-history-id="${workout.id}">
+  return `<div class="swipe-record" data-swipe-record="${workout.id}"><button class="swipe-delete" data-delete-history-id="${workout.id}" aria-label="删除训练记录">删除</button><button class="card recent-record" data-history-id="${workout.id}">
     <div class="between"><div><strong>${dateLabel(workout.startedAt)}</strong><p class="subtle">主要肌群：${muscles.slice(0, 3).map(([name]) => name).join(" / ") || "未记录"}</p></div><strong class="mono">${formatDuration(workoutElapsed(workout))}</strong></div>
     <div class="record-exercises">${workout.exercises.map(ex => `<div><span>${ex.name}</span><b>${ex.sets.filter(set => set.endedAt).length} 组</b></div>`).join("")}</div>
-  </button>`;
+  </button></div>`;
 }
 
 function renderWorkout() {
@@ -264,8 +264,7 @@ function renderWorkout() {
         <div class="between"><button class="icon-button" data-action="go-train">×</button><div><p class="eyebrow">健身进行中</p><h2>${dateLabel(workout.startedAt)}</h2></div><strong class="focus-clock mono" data-live="workout">${formatDuration(workoutElapsed())}</strong></div>
         <p class="subtle">${workout.exercises.length} 个动作 · ${completedSetCount()} 个完成组</p>
       </header>
-      ${workout.exercises.length ? `<div class="exercise-list">${workout.exercises.map((ex, index) => exerciseListItem(ex, index)).join("")}</div>` : `<div class="workout-empty"><div class="empty-icon">＋</div><h2>先添加一个动作</h2><p class="subtle">自由训练没有预设内容，只记录你今天实际练的动作。</p></div>`}
-      <article class="workout-note-card"><label for="workout-note">本次训练记录</label><textarea id="workout-note" data-workout-note placeholder="记录训练感受、状态、动作心得……">${escapeHtml(workout.note)}</textarea><small>输入内容会自动保存</small></article>
+      ${workout.exercises.length ? `<div class="exercise-list">${workout.exercises.map((ex, index) => exerciseListItem(ex, index)).join("")}</div>` : `<button class="workout-empty clickable-empty" data-action="open-library"><div class="empty-icon">＋</div><h2>先添加一个动作</h2><p class="subtle">点击这里，从动作库选择本次实际训练的动作。</p></button>`}
       <div class="actions"><button class="secondary" data-action="open-library">添加动作</button><button class="primary" data-action="finish-workout">结束健身</button></div>
     </section>`;
 }
@@ -377,7 +376,7 @@ function renderLibrary() {
     return groups;
   }, {});
   return `<section class="screen ${selectionTarget ? "focus" : ""}">
-    <div class="between"><div><p class="eyebrow">动作库</p><h1>${selectionTarget ? "添加动作" : "按肌群查找"}</h1></div>${selectionTarget ? `<button class="icon-button" data-action="${selectingHistory ? "back-history-editor" : "back-workout"}">×</button>` : ""}</div>
+    <div class="between"><div><p class="eyebrow">动作库</p><h1>${selectionTarget ? "添加动作" : "按肌群查找"}</h1></div>${selectionTarget ? `<button class="icon-button" data-action="${selectingHistory ? "back-history-editor" : "go-train"}">×</button>` : ""}</div>
     <div class="search-box"><span>⌕</span><input id="exercise-search" type="search" placeholder="搜索名称、肌群或器械" value="${state.query}"></div>
     <div class="muscle-tabs">${muscleGroups.map(group => `<button class="${group === state.groupFilter ? "selected" : ""}" data-group="${group}">${group}</button>`).join("")}</div>
     <div class="group-summary"><strong>${state.groupFilter}</strong><span>${results.length} 个动作 · ${Object.keys(subgrouped).length} 个分类</span></div>
@@ -461,7 +460,7 @@ function renderDayDetail() {
   return `<section class="screen focus">
     <div class="between"><button class="icon-button" data-action="back-history">‹</button><span class="chip">${workouts.length} 次</span></div>
     <header class="day-header"><p class="eyebrow">训练日期</p><h1>${fullDateLabel(key)}</h1><p class="subtle">可以打开已有训练进行修改，也可以补录当天训练。</p></header>
-    ${workouts.length ? `<div class="history-list">${workouts.map(recentWorkoutCard).join("")}</div>` : `<div class="workout-empty compact-empty"><div class="empty-icon">＋</div><h2>当天没有记录</h2><p class="subtle">可以手动补录动作、组数、重量、次数和时间。</p></div>`}
+    ${workouts.length ? `<div class="history-list">${workouts.map(recentWorkoutCard).join("")}</div>` : `<button class="workout-empty compact-empty clickable-empty" data-action="new-day-workout"><div class="empty-icon">＋</div><h2>当天没有记录</h2><p class="subtle">点击这里补录动作、组数、重量、次数和时间。</p></button>`}
     <button class="primary full" style="margin-top:18px" data-action="new-day-workout">新增当日训练</button>
   </section>`;
 }
@@ -519,7 +518,7 @@ function summaryExerciseCard(ex) {
 
 function renderSummary() {
   const workout = state.summary;
-  return `<section class="screen focus"><div class="summary-hero"><div class="check-ring">✓</div><p class="eyebrow">记录已保存</p><h1>健身结束</h1><p class="subtle">${dateLabel(workout.startedAt)} · ${clockTime(workout.startedAt)}–${clockTime(workout.endedAt)}</p></div>${summaryStats(workout)}${workout.note ? `<article class="card saved-note"><p class="eyebrow">训练记录</p><p>${escapeHtml(workout.note)}</p></article>` : ""}<div class="summary-list">${workout.exercises.map(summaryExerciseCard).join("")}</div><button class="primary full" style="margin-top:18px" data-action="close-summary">完成</button></section>`;
+  return `<section class="screen focus"><div class="summary-hero"><div class="check-ring">✓</div><p class="eyebrow">记录已保存</p><h1>健身结束</h1><p class="subtle">${dateLabel(workout.startedAt)} · ${clockTime(workout.startedAt)}–${clockTime(workout.endedAt)}</p></div>${summaryStats(workout)}<article class="workout-note-card summary-note"><label for="summary-note">本次训练心得</label><textarea id="summary-note" data-summary-note placeholder="记录训练感受、状态、动作心得……">${escapeHtml(workout.note)}</textarea><small>输入内容会自动保存到本次训练</small></article><div class="summary-list">${workout.exercises.map(summaryExerciseCard).join("")}</div><button class="primary full" style="margin-top:18px" data-action="close-summary">完成</button></section>`;
 }
 
 function renderProfile() {
@@ -581,14 +580,25 @@ function bindEvents() {
   document.querySelectorAll("[data-open-exercise]").forEach(el => el.addEventListener("click", () => { state.activeExercise = Number(el.dataset.openExercise); state.screen = "exercise"; saveState(); render(); }));
   document.querySelectorAll("[data-add-exercise]").forEach(el => el.addEventListener("click", () => addExercise(el.dataset.addExercise)));
   document.querySelectorAll("[data-quick-add]").forEach(el => el.addEventListener("click", () => { if (!state.workout) return toast("请先点击开始健身"); addExercise(el.dataset.quickAdd); }));
-  document.querySelectorAll("[data-history-id]").forEach(el => el.addEventListener("click", () => { state.summary = state.history.find(w => w.id === el.dataset.historyId); state.screen = "history-detail"; saveState(); render(); }));
+  document.querySelectorAll("[data-history-id]").forEach(el => el.addEventListener("click", () => {
+    const swipeRecord = el.closest("[data-swipe-record]");
+    if (swipeRecord?.classList.contains("open")) { closeSwipeRecord(swipeRecord); return; }
+    state.summary = state.history.find(w => w.id === el.dataset.historyId); state.screen = "history-detail"; saveState(); render();
+  }));
+  document.querySelectorAll("[data-delete-history-id]").forEach(el => el.addEventListener("click", event => { event.stopPropagation(); deleteHistoryById(el.dataset.deleteHistoryId); }));
   document.querySelectorAll("[data-calendar-date]").forEach(el => el.addEventListener("click", () => { state.editingDateKey = el.dataset.calendarDate; state.screen = "day-detail"; saveState(); render(); }));
   document.querySelectorAll("[data-unit]").forEach(el => el.addEventListener("click", () => { state.unit = el.dataset.unit; saveState(); render(); }));
   document.querySelectorAll("[data-group]").forEach(el => el.addEventListener("click", () => { state.groupFilter = el.dataset.group; state.query = ""; saveState(); render(); }));
   document.querySelectorAll("[data-detail-id]").forEach(el => el.addEventListener("click", () => { state.activeDetailId = el.dataset.detailId; state.screen = "exercise-detail"; saveState(); render(); }));
   document.querySelectorAll("[data-gender]").forEach(el => el.addEventListener("click", () => { state.profile.gender = el.dataset.gender; saveState(); render(); }));
   document.querySelectorAll("[data-profile]").forEach(el => el.addEventListener("input", () => { state.profile[el.dataset.profile] = el.value; saveState(); }));
-  document.querySelectorAll("[data-workout-note]").forEach(el => el.addEventListener("input", () => { if (state.workout) { state.workout.note = el.value; saveState(); } }));
+  document.querySelectorAll("[data-summary-note]").forEach(el => el.addEventListener("input", () => {
+    if (!state.summary) return;
+    state.summary.note = el.value;
+    const saved = state.history.find(workout => workout.id === state.summary.id);
+    if (saved) saved.note = el.value;
+    saveState();
+  }));
   document.querySelectorAll("[data-edit-session]").forEach(el => el.addEventListener("input", () => { const value = new Date(el.value).getTime(); if (Number.isFinite(value)) { state.editingWorkout[el.dataset.editSession] = value; saveState(); } }));
   document.querySelectorAll("[data-edit-note]").forEach(el => el.addEventListener("input", () => { state.editingWorkout.note = el.value; saveState(); }));
   document.querySelectorAll("[data-edit-set]").forEach(el => el.addEventListener("input", () => {
@@ -612,6 +622,45 @@ function bindEvents() {
   document.querySelectorAll("[data-edit-remove-exercise]").forEach(el => el.addEventListener("click", () => { state.editingWorkout.exercises.splice(Number(el.dataset.editRemoveExercise), 1); saveState(); render(); }));
   document.querySelectorAll("[data-action]").forEach(el => el.addEventListener("click", () => handleAction(el.dataset.action, el)));
   document.getElementById("exercise-search")?.addEventListener("input", event => { state.query = event.target.value; saveState(); render(); document.getElementById("exercise-search")?.focus(); });
+  bindSwipeRecords();
+}
+
+function closeSwipeRecord(record) {
+  record.classList.remove("open");
+  const card = record.querySelector(".recent-record");
+  if (card) card.style.transform = "translateX(0)";
+}
+
+function bindSwipeRecords() {
+  document.querySelectorAll("[data-swipe-record]").forEach(record => {
+    const card = record.querySelector(".recent-record");
+    let startX = 0;
+    let deltaX = 0;
+    card.addEventListener("touchstart", event => {
+      document.querySelectorAll("[data-swipe-record].open").forEach(open => { if (open !== record) closeSwipeRecord(open); });
+      startX = event.touches[0].clientX;
+      deltaX = 0;
+      card.style.transition = "none";
+    }, { passive: true });
+    card.addEventListener("touchmove", event => {
+      deltaX = event.touches[0].clientX - startX;
+      if (Math.abs(deltaX) > 8) event.preventDefault();
+      card.style.transform = `translateX(${Math.max(-84, Math.min(0, deltaX))}px)`;
+    }, { passive: false });
+    card.addEventListener("touchend", () => {
+      card.style.transition = "";
+      if (deltaX < -42) { record.classList.add("open"); card.style.transform = "translateX(-84px)"; }
+      else closeSwipeRecord(record);
+    });
+  });
+}
+
+function deleteHistoryById(id) {
+  if (!confirm("删除这次训练记录？删除后无法恢复。")) return;
+  state.history = state.history.filter(workout => workout.id !== id);
+  if (state.summary?.id === id) state.summary = null;
+  saveState();
+  render();
 }
 
 function addExercise(id) {
