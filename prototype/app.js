@@ -228,7 +228,7 @@ function renderTrainHome() {
   return `
     <section class="screen">
       <div class="between">
-        <div><p class="eyebrow">个人力量训练记录</p><h1>记录真实训练</h1><p class="subtle">不安排计划，只保存你实际完成的每一组。</p></div>
+        <div><p class="eyebrow">个人力量训练记录</p><h1>记录真实训练</h1><p class="subtle">真实记录，真实进步！</p></div>
         <button class="icon-button" data-nav="profile" aria-label="设置">⚙</button>
       </div>
       <article class="hero-card">
