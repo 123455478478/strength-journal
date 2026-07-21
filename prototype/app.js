@@ -70,7 +70,7 @@ const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿"];
 
 function emptyState() {
   return {
-    version: 5, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
+    version: 6, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
     editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
@@ -85,7 +85,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 5, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 6, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -375,13 +375,13 @@ function renderLibrary() {
     (groups[ex.subgroup] ||= []).push(ex);
     return groups;
   }, {});
-  return `<section class="screen ${selectionTarget ? "focus" : ""}">
+  return `<section class="screen ${selectingHistory ? "focus" : ""}">
     <div class="between"><div><p class="eyebrow">动作库</p><h1>${selectionTarget ? "添加动作" : "按肌群查找"}</h1></div>${selectionTarget ? `<button class="icon-button" data-action="${selectingHistory ? "back-history-editor" : "go-train"}">×</button>` : ""}</div>
     <div class="search-box"><span>⌕</span><input id="exercise-search" type="search" placeholder="搜索名称、肌群或器械" value="${state.query}"></div>
     <div class="muscle-tabs">${muscleGroups.map(group => `<button class="${group === state.groupFilter ? "selected" : ""}" data-group="${group}">${group}</button>`).join("")}</div>
     <div class="group-summary"><strong>${state.groupFilter}</strong><span>${results.length} 个动作 · ${Object.keys(subgrouped).length} 个分类</span></div>
     <div class="library-groups">${Object.entries(subgrouped).map(([subgroup, items]) => `<section class="subgroup"><h3>${subgroup}</h3><div class="library-list">${items.map(ex => libraryItem(ex)).join("")}</div></section>`).join("") || `<div class="workout-empty"><h3>没有找到动作</h3><p class="subtle">尝试其他关键词或肌群。</p></div>`}</div>
-    ${!selectionTarget ? nav("exercises") : ""}
+    ${selectingHistory ? "" : nav("exercises")}
   </section>`;
 }
 
@@ -394,16 +394,17 @@ function libraryItem(ex) {
 function renderExerciseDetail() {
   const ex = catalogue.find(item => item.id === state.activeDetailId);
   if (!ex) { state.screen = "exercises"; return renderLibrary(); }
+  const editingHistory = state.libraryContext === "history-edit";
   const target = state.libraryContext === "history-edit" ? state.editingWorkout : state.workout;
   const added = target?.exercises.some(item => item.id === ex.id);
-  return `<section class="screen focus detail-screen">
+  return `<section class="screen ${editingHistory ? "focus" : "has-nav"} detail-screen">
     <button class="icon-button" data-action="back-library">‹</button>
     <div class="detail-hero"><span class="detail-group">${ex.group} · ${ex.subgroup}</span><h1>${ex.name}</h1><p>${ex.equipment} · ${ex.muscles.join(" / ")}</p></div>
     <div class="guidance-grid"><article><span>负重倾向</span><strong>${ex.load}</strong></article><article><span>常用次数</span><strong>${ex.reps}</strong></article></div>
     <article class="card tip-card"><p class="eyebrow">训练要点</p><ul>${ex.tips.map(tip => `<li>${tip}</li>`).join("")}</ul></article>
     <article class="source-note"><strong>使用提示</strong><p>重量与次数是一般参考范围。优先选择能保持动作控制的重量；出现疼痛、眩晕或异常不适时停止训练。</p><p class="reference-links"><a href="https://acsm.org/resistance-training-guidelines-update-2026/" target="_blank" rel="noreferrer">ACSM 阻力训练指南</a><a href="https://www.acefitness.org/resources/everyone/exercise-library/equipment/" target="_blank" rel="noreferrer">ACE 动作库</a></p></article>
     <div class="sticky-action"><button class="primary full" data-add-exercise="${ex.id}" ${added ? "disabled" : ""}>${added ? "已加入记录" : target ? "加入训练记录" : "请先开始健身"}</button></div>
-  </section>`;
+  </section>${editingHistory ? "" : nav("exercises")}`;
 }
 
 function historyCard(workout) {
@@ -790,12 +791,11 @@ function handleAction(action, el) {
     saveState(); return render();
   }
   if (action === "finish-workout") {
-    if (!state.workout.exercises.length) {
+    if (!completedSetCount()) {
       state.workout = null;
       state.screen = "train";
       saveState(); return render();
     }
-    if (!completedSetCount()) return toast("请至少完成一组后再保存训练");
     const saved = JSON.parse(JSON.stringify(state.workout));
     saved.endedAt = now();
     saved.exercises = saved.exercises.filter(ex => ex.sets.some(set => set.endedAt));

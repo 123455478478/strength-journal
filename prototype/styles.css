@@ -296,6 +296,7 @@ h3 { margin-bottom: 5px; font-size: 17px; }
   padding-top: 12px;
   background: linear-gradient(transparent, var(--paper) 35%);
 }
+.detail-screen.has-nav .sticky-action { bottom: 82px; }
 
 .active-set-screen {
   min-height: 100vh;
