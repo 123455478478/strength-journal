@@ -10,7 +10,7 @@ const catalogue = [
   { id: "widepulldown", name: "宽握正手高位下拉", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "大圆肌", "肱二头"], equipment: "器械", load: "中等重量", reps: "8–15 次", tips: ["握距略宽于肩即可，不必追求极宽", "先下沉肩胛，再把肘部拉向身体两侧", "拉到上胸位置，不做颈后下拉"] },
   { id: "closepulldown", name: "窄握对握高位下拉", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "器械", load: "中等重量", reps: "8–15 次", tips: ["使用对握把手并保持手腕中立", "肘部向下并略向后拉近身体", "避免大幅后仰把动作变成划船"] },
   { id: "reversepulldown", name: "反手高位下拉", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "器械", load: "小到中等重量", reps: "8–15 次", tips: ["使用肩宽或略窄的反手握距", "保持胸廓稳定，将肘部拉向身体两侧", "手腕或肘部不适时改用对握"] },
-  { id: "pullup", name: "引体向上", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "单杠", load: "自重或附加重量", reps: "4–12 次", tips: ["从肩胛稳定开始，不要耸肩悬挂", "保持躯干稳定，避免大幅摆动", "能力不足时使用辅助器械或弹力带"] },
+  { id: "pullup", name: "引体向上", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "单杠", load: "自重或负重", reps: "4–12 次", tips: ["从肩胛稳定开始，不要耸肩悬挂", "保持躯干稳定，避免大幅摆动", "能力不足时使用辅助器械或弹力带"] },
   { id: "row", name: "坐姿划船", group: "背部", subgroup: "水平拉", muscles: ["背阔肌", "菱形肌", "肱二头"], equipment: "器械", load: "中等重量", reps: "8–15 次", tips: ["保持脊柱中立和胸廓稳定", "肘部向后拉，结束时避免过度后仰", "回程受控，让肩胛自然前伸"] },
   { id: "dbrow", name: "单臂哑铃划船", group: "背部", subgroup: "水平拉", muscles: ["背阔肌", "肱二头"], equipment: "哑铃", load: "中等重量", reps: "8–15 次/侧", tips: ["支撑侧保持稳定，避免身体旋转", "将肘部拉向髋部而不是耸肩", "下放时保持控制"] },
 
@@ -56,7 +56,7 @@ const catalogue = [
   { id: "reversecurl", name: "反握杠铃弯举", group: "手臂", subgroup: "前臂", muscles: ["肱桡肌", "前臂伸肌"], equipment: "杠铃", load: "小重量", reps: "10–15 次", tips: ["使用较轻重量并保持手腕中立", "肘部靠近身体", "避免用身体摆动完成"] },
   { id: "closebench", name: "窄握卧推", group: "手臂", subgroup: "肱三头", muscles: ["肱三头", "胸大肌"], equipment: "杠铃", load: "中等到大重量", reps: "5–10 次", tips: ["握距无需过窄，保持手腕与前臂对齐", "肘部沿身体两侧自然下降", "大重量使用保护杆或保护者"] },
   { id: "skullcrusher", name: "仰卧臂屈伸", group: "手臂", subgroup: "肱三头", muscles: ["肱三头"], equipment: "曲杆", load: "小到中等重量", reps: "8–15 次", tips: ["上臂保持相对固定", "杠铃向头后或额头方向受控下降", "肘部不适时改用绳索动作"] },
-  { id: "dip", name: "双杠臂屈伸", group: "胸部", subgroup: "下胸", muscles: ["胸大肌下部", "肱三头", "三角肌前束"], equipment: "双杠", load: "自重或附加重量", reps: "5–15 次", tips: ["躯干适度前倾以增加胸部参与", "肩胛保持稳定，只下降到肩部舒适的深度", "不能稳定完成时使用辅助器械"] },
+  { id: "dip", name: "双杠臂屈伸", group: "胸部", subgroup: "下胸", muscles: ["胸大肌下部", "肱三头", "三角肌前束"], equipment: "双杠", load: "自重或负重", reps: "5–15 次", tips: ["躯干适度前倾以增加胸部参与", "肩胛保持稳定，只下降到肩部舒适的深度", "不能稳定完成时使用辅助器械"] },
 
   { id: "deadlift", name: "传统硬拉", group: "腿", subgroup: "后链/臀部", muscles: ["臀大肌", "腘绳肌", "背部"], equipment: "杠铃", load: "大重量", reps: "3–8 次", tips: ["起拉前固定躯干并让杠铃贴近身体", "脚掌稳定发力，髋膝协调伸展", "疲劳导致背部位置失控时结束该组"] },
   { id: "frontsquat", name: "杠铃前蹲", group: "腿", subgroup: "股四头/臀部", muscles: ["股四头肌", "臀大肌", "躯干"], equipment: "杠铃", load: "中等到大重量", reps: "4–10 次", tips: ["肘部保持抬高并稳定杠铃", "躯干直立、脚掌稳定", "手腕或肩部受限时使用交叉臂或拉带握法"] },
@@ -143,7 +143,7 @@ function repetitionUnit(ex) {
 
 function setPerformance(ex, set) {
   if (isBodyweightExercise(ex)) {
-    const addedLoad = Number(set.weight) > 0 ? `附重 ${set.weight} ${state.unit} · ` : "";
+    const addedLoad = Number(set.weight) > 0 ? `负重 ${set.weight} ${state.unit} · ` : "";
     return `${addedLoad}${set.reps} ${repetitionUnit(ex)}`;
   }
   return `${set.weight} ${state.unit} × ${set.reps}`;
@@ -307,7 +307,7 @@ function exerciseListItem(ex, index) {
   const cls = running ? "active" : done.length ? "done" : "";
   const mark = running ? "●" : done.length ? "✓" : "○";
   const maxWeight = done.length ? Math.max(...done.map(set => set.weight)) : 0;
-  const loadDetail = isBodyweightExercise(ex) ? (maxWeight > 0 ? ` · 最高附重 ${maxWeight} ${state.unit}` : "") : ` · 最高 ${maxWeight} ${state.unit}`;
+  const loadDetail = isBodyweightExercise(ex) ? (maxWeight > 0 ? ` · 最高负重 ${maxWeight} ${state.unit}` : "") : ` · 最高 ${maxWeight} ${state.unit}`;
   const detail = running ? "当前组进行中" : done.length ? `${done.length} 组${loadDetail}` : "尚未开始";
   return `<button class="exercise-item ${cls}" data-open-exercise="${index}"><span class="status-mark">${mark}</span><span><strong>${ex.name}</strong><small>${ex.muscles.join(" / ")} · ${detail}</small></span><span class="chevron">›</span></button>`;
 }
@@ -378,7 +378,7 @@ function renderActiveSet() {
   return `<section class="active-set-screen">
     <div class="between"><div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${index + 1} 组 · 进行中</h2></div><span class="chip">${ex.muscles[0]}</span></div>
     <div class="active-timer mono" data-live="set">${formatDuration(secondsBetween(set.startedAt, now()))}</div>
-    <p class="active-hint">${isBodyweightExercise(ex) ? "完成后记录次数或时长，附加重量可选" : "完成动作后再填写本组重量和次数"}</p>
+    <p class="active-hint">${isBodyweightExercise(ex) ? "完成后记录次数或时长，负重可选" : "完成动作后再填写本组重量和次数"}</p>
     <button class="primary complete-set full" data-action="end-set">结束本组</button>
     <button class="cancel-link" data-action="cancel-set">取消本组</button>
   </section>`;
@@ -392,11 +392,11 @@ function renderSetEntry() {
   const unit = repetitionUnit(ex);
   const loadExpanded = Number(set.weight) > 0;
   const repsBox = `<div class="number-box"><label for="reps">${unit === "秒" ? "完成时长" : "完成次数"}</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="reps" data-delta="-1" aria-label="${unit}数减 1">−</button><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>${unit}</span><button data-action="adjust-set-value" data-field="reps" data-delta="1" aria-label="${unit}数加 1">＋</button></div></div>`;
-  const weightBox = `<div class="number-box"><label for="weight">${bodyweight ? "附加重量（可选）" : "本组重量"}</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="weight" data-delta="-1" aria-label="重量减 1">−</button><input id="weight" type="number" inputmode="decimal" step="1" value="${set.weight}"><span>${state.unit}</span><button data-action="adjust-set-value" data-field="weight" data-delta="1" aria-label="重量加 1">＋</button></div></div>`;
+  const weightBox = `<div class="number-box"><label for="weight">${bodyweight ? "负重（可选）" : "本组重量"}</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="weight" data-delta="-1" aria-label="重量减 1">−</button><input id="weight" type="number" inputmode="decimal" step="1" value="${set.weight}"><span>${state.unit}</span><button data-action="adjust-set-value" data-field="weight" data-delta="1" aria-label="重量加 1">＋</button></div></div>`;
   return `<section class="active-set-screen set-entry-screen">
     <div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${state.pendingSetIndex + 1} 组已结束</h2><p class="subtle">${clockTime(set.startedAt)}–${clockTime(set.endedAt)} · 本组 ${formatDuration(secondsBetween(set.startedAt, set.endedAt))}</p></div>
     <div class="entry-check">✓</div>
-    ${bodyweight ? `<div class="input-grid single">${repsBox}</div><button class="optional-load-toggle" data-action="toggle-optional-weight" aria-expanded="${loadExpanded}">${loadExpanded ? "收起附加重量" : "＋ 记录附加重量（可选）"}</button><div class="optional-load-panel" ${loadExpanded ? "" : "hidden"}>${weightBox}<small>只记录额外负重，自身体重无需填写</small></div>` : `<div class="input-grid">${weightBox}${repsBox}</div>`}
+    ${bodyweight ? `<div class="input-grid single">${repsBox}</div><button class="optional-load-toggle" data-action="toggle-optional-weight" aria-expanded="${loadExpanded}">${loadExpanded ? "收起负重" : "＋ 记录负重（可选）"}</button><div class="optional-load-panel" ${loadExpanded ? "" : "hidden"}>${weightBox}<small>只记录额外负重，自身体重无需填写</small></div>` : `<div class="input-grid">${weightBox}${repsBox}</div>`}
     <button class="primary complete-set full" data-action="save-set">保存本组</button>
     <button class="cancel-link" data-action="undo-end-set">返回继续计时</button>
   </section>`;
@@ -530,7 +530,7 @@ function renderHistoryEditor() {
 function editExerciseCard(ex, exIndex) {
   const bodyweight = isBodyweightExercise(ex);
   const repLabel = repetitionUnit(ex) === "秒" ? "时长（秒）" : "次数";
-  return `<article class="card edit-exercise-card"><div class="between"><div><h3>${ex.name}</h3><p class="subtle">${ex.group || ex.muscles[0]} · ${ex.sets.length} 组</p></div><button class="mini-danger" data-edit-remove-exercise="${exIndex}">删除</button></div><div class="edit-set-list">${ex.sets.map((set, setIndex) => `<div class="edit-set-row"><b>${setIndex + 1}</b><label><span>${bodyweight ? "附重（可选）" : "重量"}</span><input type="number" step="1" value="${set.weight}" data-edit-set="${exIndex}:${setIndex}:weight"></label><label><span>${repLabel}</span><input type="number" step="1" value="${set.reps}" data-edit-set="${exIndex}:${setIndex}:reps"></label><label><span>开始</span><input type="time" step="1" value="${timeInputValue(set.startedAt)}" data-edit-set="${exIndex}:${setIndex}:startedAt"></label><label><span>结束</span><input type="time" step="1" value="${timeInputValue(set.endedAt)}" data-edit-set="${exIndex}:${setIndex}:endedAt"></label><button class="remove-set" data-edit-remove-set="${exIndex}:${setIndex}">×</button></div>`).join("")}</div><button class="secondary compact-button" data-edit-add-set="${exIndex}">＋ 添加一组</button></article>`;
+  return `<article class="card edit-exercise-card"><div class="between"><div><h3>${ex.name}</h3><p class="subtle">${ex.group || ex.muscles[0]} · ${ex.sets.length} 组</p></div><button class="mini-danger" data-edit-remove-exercise="${exIndex}">删除</button></div><div class="edit-set-list">${ex.sets.map((set, setIndex) => `<div class="edit-set-row"><b>${setIndex + 1}</b><label><span>${bodyweight ? "负重（可选）" : "重量"}</span><input type="number" step="1" value="${set.weight}" data-edit-set="${exIndex}:${setIndex}:weight"></label><label><span>${repLabel}</span><input type="number" step="1" value="${set.reps}" data-edit-set="${exIndex}:${setIndex}:reps"></label><label><span>开始</span><input type="time" step="1" value="${timeInputValue(set.startedAt)}" data-edit-set="${exIndex}:${setIndex}:startedAt"></label><label><span>结束</span><input type="time" step="1" value="${timeInputValue(set.endedAt)}" data-edit-set="${exIndex}:${setIndex}:endedAt"></label><button class="remove-set" data-edit-remove-set="${exIndex}:${setIndex}">×</button></div>`).join("")}</div><button class="secondary compact-button" data-edit-add-set="${exIndex}">＋ 添加一组</button></article>`;
 }
 
 function renderHistoryDetail() {
@@ -780,7 +780,7 @@ function handleAction(action, el) {
     if (!panel) return;
     panel.toggleAttribute("hidden", !expanded);
     el.setAttribute("aria-expanded", String(expanded));
-    el.textContent = expanded ? "收起附加重量" : "＋ 记录附加重量（可选）";
+    el.textContent = expanded ? "收起负重" : "＋ 记录负重（可选）";
     return;
   }
   if (action === "previous-calendar-month") { state.calendarOffset -= 1; saveState(); return render(); }
