@@ -84,7 +84,7 @@ const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿", "核心"];
 
 function emptyState() {
   return {
-    version: 10, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
+    version: 11, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
     editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null, calendarOffset: 0,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
@@ -99,7 +99,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 10, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 11, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -129,6 +129,24 @@ function dateLabel(timestamp) {
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
+}
+
+const optionalLoadExerciseIds = new Set(["pullup", "dip", "pushup", "crunch", "hangingraise", "abwheel", "plank", "sideplank", "backextension", "birddog"]);
+
+function isBodyweightExercise(ex) {
+  return Boolean(ex) && (ex.equipment === "自重" || ex.load?.startsWith("自重") || optionalLoadExerciseIds.has(ex.id));
+}
+
+function repetitionUnit(ex) {
+  return ex?.reps?.includes("秒") ? "秒" : "次";
+}
+
+function setPerformance(ex, set) {
+  if (isBodyweightExercise(ex)) {
+    const addedLoad = Number(set.weight) > 0 ? `附重 ${set.weight} ${state.unit} · ` : "";
+    return `${addedLoad}${set.reps} ${repetitionUnit(ex)}`;
+  }
+  return `${set.weight} ${state.unit} × ${set.reps}`;
 }
 
 function createWorkout(startedAt = now()) {
@@ -289,7 +307,8 @@ function exerciseListItem(ex, index) {
   const cls = running ? "active" : done.length ? "done" : "";
   const mark = running ? "●" : done.length ? "✓" : "○";
   const maxWeight = done.length ? Math.max(...done.map(set => set.weight)) : 0;
-  const detail = running ? "当前组进行中" : done.length ? `${done.length} 组 · 最高 ${maxWeight} ${state.unit}` : "尚未开始";
+  const loadDetail = isBodyweightExercise(ex) ? (maxWeight > 0 ? ` · 最高附重 ${maxWeight} ${state.unit}` : "") : ` · 最高 ${maxWeight} ${state.unit}`;
+  const detail = running ? "当前组进行中" : done.length ? `${done.length} 组${loadDetail}` : "尚未开始";
   return `<button class="exercise-item ${cls}" data-open-exercise="${index}"><span class="status-mark">${mark}</span><span><strong>${ex.name}</strong><small>${ex.muscles.join(" / ")} · ${detail}</small></span><span class="chevron">›</span></button>`;
 }
 
@@ -325,7 +344,7 @@ function renderExercise() {
       <header class="exercise-head">
         <p class="eyebrow">${ex.equipment} · ${ex.muscles.join(" · ")}</p><h1>${ex.name}</h1>
         <div class="chips">${ex.muscles.map(m => `<span class="chip">${m}</span>`).join("")}</div>
-        <div class="history-note"><strong>上次表现</strong><div class="subtle">${last ? last.sets.filter(s => s.endedAt).map(s => `${s.weight} ${state.unit} × ${s.reps}`).join(" · ") : "暂无历史记录"}</div></div>
+        <div class="history-note"><strong>上次表现</strong><div class="subtle">${last ? last.sets.filter(s => s.endedAt).map(s => setPerformance(ex, s)).join(" · ") : "暂无历史记录"}</div></div>
       </header>
       <div class="between"><h3>实际训练组</h3><span class="subtle mono">动作总用时 ${formatDuration(exerciseTotal(ex))}</span></div>
       <div class="set-list">${ex.sets.map((set, index) => renderSet(ex, set, index, nextIndex)).join("")}</div>
@@ -340,7 +359,7 @@ function renderSet(ex, set, index, nextIndex) {
   const deletable = !complete && !set.startedAt && ex.sets.length > 1;
   const duration = complete ? secondsBetween(set.startedAt, set.endedAt) : set.startedAt ? secondsBetween(set.startedAt, now()) : 0;
   const rest = restAfter(ex, index);
-  return `<div><div class="set-swipe ${deletable ? "deletable" : ""}" data-set-swipe="${index}">${deletable ? `<button class="set-swipe-delete" data-delete-pending-set="${index}" aria-label="删除第 ${index + 1} 组">删除</button>` : ""}<div class="set-row ${complete ? "complete" : ""} ${current ? "current" : ""}"><span class="set-index">${complete ? "✓" : index + 1}</span><span class="set-main"><strong>${set.weight} ${state.unit} × ${set.reps}</strong><small>${complete ? `本组 ${formatDuration(duration)}` : current ? "下一组" : "待完成"}</small></span><span class="mono subtle">${complete ? `${clockTime(set.startedAt)}–${clockTime(set.endedAt)}` : ""}</span></div></div>${rest !== null ? `<div class="rest-row mono">组间歇 <span data-rest-index="${index}">${formatDuration(rest)}</span>${!ex.sets[index + 1].startedAt ? " ↑" : ""}</div>` : ""}</div>`;
+  return `<div><div class="set-swipe ${deletable ? "deletable" : ""}" data-set-swipe="${index}">${deletable ? `<button class="set-swipe-delete" data-delete-pending-set="${index}" aria-label="删除第 ${index + 1} 组">删除</button>` : ""}<div class="set-row ${complete ? "complete" : ""} ${current ? "current" : ""}"><span class="set-index">${complete ? "✓" : index + 1}</span><span class="set-main"><strong>${setPerformance(ex, set)}</strong><small>${complete ? `本组 ${formatDuration(duration)}` : current ? "下一组" : "待完成"}</small></span><span class="mono subtle">${complete ? `${clockTime(set.startedAt)}–${clockTime(set.endedAt)}` : ""}</span></div></div>${rest !== null ? `<div class="rest-row mono">组间歇 <span data-rest-index="${index}">${formatDuration(rest)}</span>${!ex.sets[index + 1].startedAt ? " ↑" : ""}</div>` : ""}</div>`;
 }
 
 function latestExerciseFor(id) {
@@ -359,7 +378,7 @@ function renderActiveSet() {
   return `<section class="active-set-screen">
     <div class="between"><div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${index + 1} 组 · 进行中</h2></div><span class="chip">${ex.muscles[0]}</span></div>
     <div class="active-timer mono" data-live="set">${formatDuration(secondsBetween(set.startedAt, now()))}</div>
-    <p class="active-hint">完成动作后再填写本组重量和次数</p>
+    <p class="active-hint">${isBodyweightExercise(ex) ? "完成后记录次数或时长，附加重量可选" : "完成动作后再填写本组重量和次数"}</p>
     <button class="primary complete-set full" data-action="end-set">结束本组</button>
     <button class="cancel-link" data-action="cancel-set">取消本组</button>
   </section>`;
@@ -369,13 +388,15 @@ function renderSetEntry() {
   const ex = state.workout?.exercises[state.activeExercise];
   const set = ex?.sets[state.pendingSetIndex];
   if (!set?.endedAt) { state.screen = "exercise"; return renderExercise(); }
+  const bodyweight = isBodyweightExercise(ex);
+  const unit = repetitionUnit(ex);
+  const loadExpanded = Number(set.weight) > 0;
+  const repsBox = `<div class="number-box"><label for="reps">${unit === "秒" ? "完成时长" : "完成次数"}</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="reps" data-delta="-1" aria-label="${unit}数减 1">−</button><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>${unit}</span><button data-action="adjust-set-value" data-field="reps" data-delta="1" aria-label="${unit}数加 1">＋</button></div></div>`;
+  const weightBox = `<div class="number-box"><label for="weight">${bodyweight ? "附加重量（可选）" : "本组重量"}</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="weight" data-delta="-1" aria-label="重量减 1">−</button><input id="weight" type="number" inputmode="decimal" step="1" value="${set.weight}"><span>${state.unit}</span><button data-action="adjust-set-value" data-field="weight" data-delta="1" aria-label="重量加 1">＋</button></div></div>`;
   return `<section class="active-set-screen set-entry-screen">
     <div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${state.pendingSetIndex + 1} 组已结束</h2><p class="subtle">${clockTime(set.startedAt)}–${clockTime(set.endedAt)} · 本组 ${formatDuration(secondsBetween(set.startedAt, set.endedAt))}</p></div>
     <div class="entry-check">✓</div>
-    <div class="input-grid">
-      <div class="number-box"><label for="weight">本组重量</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="weight" data-delta="-1" aria-label="重量减 1">−</button><input id="weight" type="number" inputmode="decimal" step="1" value="${set.weight}"><span>${state.unit}</span><button data-action="adjust-set-value" data-field="weight" data-delta="1" aria-label="重量加 1">＋</button></div></div>
-      <div class="number-box"><label for="reps">完成次数</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="reps" data-delta="-1" aria-label="次数减 1">−</button><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>次</span><button data-action="adjust-set-value" data-field="reps" data-delta="1" aria-label="次数加 1">＋</button></div></div>
-    </div>
+    ${bodyweight ? `<div class="input-grid single">${repsBox}</div><button class="optional-load-toggle" data-action="toggle-optional-weight" aria-expanded="${loadExpanded}">${loadExpanded ? "收起附加重量" : "＋ 记录附加重量（可选）"}</button><div class="optional-load-panel" ${loadExpanded ? "" : "hidden"}>${weightBox}<small>只记录额外负重，自身体重无需填写</small></div>` : `<div class="input-grid">${weightBox}${repsBox}</div>`}
     <button class="primary complete-set full" data-action="save-set">保存本组</button>
     <button class="cancel-link" data-action="undo-end-set">返回继续计时</button>
   </section>`;
@@ -507,7 +528,9 @@ function renderHistoryEditor() {
 }
 
 function editExerciseCard(ex, exIndex) {
-  return `<article class="card edit-exercise-card"><div class="between"><div><h3>${ex.name}</h3><p class="subtle">${ex.group || ex.muscles[0]} · ${ex.sets.length} 组</p></div><button class="mini-danger" data-edit-remove-exercise="${exIndex}">删除</button></div><div class="edit-set-list">${ex.sets.map((set, setIndex) => `<div class="edit-set-row"><b>${setIndex + 1}</b><label><span>重量</span><input type="number" step="0.5" value="${set.weight}" data-edit-set="${exIndex}:${setIndex}:weight"></label><label><span>次数</span><input type="number" step="1" value="${set.reps}" data-edit-set="${exIndex}:${setIndex}:reps"></label><label><span>开始</span><input type="time" step="1" value="${timeInputValue(set.startedAt)}" data-edit-set="${exIndex}:${setIndex}:startedAt"></label><label><span>结束</span><input type="time" step="1" value="${timeInputValue(set.endedAt)}" data-edit-set="${exIndex}:${setIndex}:endedAt"></label><button class="remove-set" data-edit-remove-set="${exIndex}:${setIndex}">×</button></div>`).join("")}</div><button class="secondary compact-button" data-edit-add-set="${exIndex}">＋ 添加一组</button></article>`;
+  const bodyweight = isBodyweightExercise(ex);
+  const repLabel = repetitionUnit(ex) === "秒" ? "时长（秒）" : "次数";
+  return `<article class="card edit-exercise-card"><div class="between"><div><h3>${ex.name}</h3><p class="subtle">${ex.group || ex.muscles[0]} · ${ex.sets.length} 组</p></div><button class="mini-danger" data-edit-remove-exercise="${exIndex}">删除</button></div><div class="edit-set-list">${ex.sets.map((set, setIndex) => `<div class="edit-set-row"><b>${setIndex + 1}</b><label><span>${bodyweight ? "附重（可选）" : "重量"}</span><input type="number" step="1" value="${set.weight}" data-edit-set="${exIndex}:${setIndex}:weight"></label><label><span>${repLabel}</span><input type="number" step="1" value="${set.reps}" data-edit-set="${exIndex}:${setIndex}:reps"></label><label><span>开始</span><input type="time" step="1" value="${timeInputValue(set.startedAt)}" data-edit-set="${exIndex}:${setIndex}:startedAt"></label><label><span>结束</span><input type="time" step="1" value="${timeInputValue(set.endedAt)}" data-edit-set="${exIndex}:${setIndex}:endedAt"></label><button class="remove-set" data-edit-remove-set="${exIndex}:${setIndex}">×</button></div>`).join("")}</div><button class="secondary compact-button" data-edit-add-set="${exIndex}">＋ 添加一组</button></article>`;
 }
 
 function renderHistoryDetail() {
@@ -529,7 +552,7 @@ function summaryStats(workout) {
 function summaryExerciseCard(ex) {
   const done = ex.sets.filter(set => set.endedAt);
   const rests = done.slice(0, -1).map((set, index) => secondsBetween(set.endedAt, done[index + 1].startedAt));
-  return `<article class="card summary-card"><div class="between"><div><h3>${ex.name}</h3><div class="chips">${ex.muscles.map(m => `<span class="chip">${m}</span>`).join("")}</div></div><strong class="mono">${formatDuration(exerciseTotal(ex))}</strong></div><div class="set-summary">${done.map(set => `${set.weight} ${state.unit} × ${set.reps}`).join(" · ")}<br><span class="rests">${rests.length ? `组间歇 ${rests.map(formatDuration).join(" · ")}` : "仅完成一组"}</span></div></article>`;
+  return `<article class="card summary-card"><div class="between"><div><h3>${ex.name}</h3><div class="chips">${ex.muscles.map(m => `<span class="chip">${m}</span>`).join("")}</div></div><strong class="mono">${formatDuration(exerciseTotal(ex))}</strong></div><div class="set-summary">${done.map(set => setPerformance(ex, set)).join(" · ")}<br><span class="rests">${rests.length ? `组间歇 ${rests.map(formatDuration).join(" · ")}` : "仅完成一组"}</span></div></article>`;
 }
 
 function renderSummary() {
@@ -751,6 +774,15 @@ function handleAction(action, el) {
     input.value = el.dataset.field === "reps" ? Math.round(value) : Number(value.toFixed(2));
     return;
   }
+  if (action === "toggle-optional-weight") {
+    const panel = document.querySelector(".optional-load-panel");
+    const expanded = panel?.hasAttribute("hidden");
+    if (!panel) return;
+    panel.toggleAttribute("hidden", !expanded);
+    el.setAttribute("aria-expanded", String(expanded));
+    el.textContent = expanded ? "收起附加重量" : "＋ 记录附加重量（可选）";
+    return;
+  }
   if (action === "previous-calendar-month") { state.calendarOffset -= 1; saveState(); return render(); }
   if (action === "next-calendar-month") { state.calendarOffset = Math.min(0, state.calendarOffset + 1); saveState(); return render(); }
   if (action === "current-calendar-month") { state.calendarOffset = 0; saveState(); return render(); }
@@ -830,7 +862,7 @@ function handleAction(action, el) {
   if (action === "save-set") {
     const ex = state.workout.exercises[state.activeExercise];
     const set = ex.sets[state.pendingSetIndex];
-    set.weight = Math.max(0, Number(document.getElementById("weight").value) || 0);
+    set.weight = Math.max(0, Number(document.getElementById("weight")?.value) || 0);
     set.reps = Math.max(0, Math.round(Number(document.getElementById("reps").value) || 0));
     state.pendingSetIndex = null;
     state.screen = "exercise";
@@ -882,7 +914,7 @@ function exportCsv() {
     const done = ex.sets.filter(set => set.endedAt);
     done.forEach((set, index) => rows.push([
       new Date(workout.startedAt).toLocaleString("zh-CN"), workout.note || "", ex.name, ex.muscles.join("/"), index + 1,
-      set.weight, state.unit, set.reps, new Date(set.startedAt).toLocaleString("zh-CN"), new Date(set.endedAt).toLocaleString("zh-CN"),
+      isBodyweightExercise(ex) && !Number(set.weight) ? "" : set.weight, state.unit, set.reps, new Date(set.startedAt).toLocaleString("zh-CN"), new Date(set.endedAt).toLocaleString("zh-CN"),
       secondsBetween(set.startedAt, set.endedAt), index ? secondsBetween(done[index - 1].endedAt, set.startedAt) : ""
     ]));
   }));
