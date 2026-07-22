@@ -84,7 +84,7 @@ const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿", "核心"];
 
 function emptyState() {
   return {
-    version: 9, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
+    version: 10, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
     editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null, calendarOffset: 0,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
@@ -99,7 +99,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 9, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 10, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -373,7 +373,7 @@ function renderSetEntry() {
     <div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${state.pendingSetIndex + 1} 组已结束</h2><p class="subtle">${clockTime(set.startedAt)}–${clockTime(set.endedAt)} · 本组 ${formatDuration(secondsBetween(set.startedAt, set.endedAt))}</p></div>
     <div class="entry-check">✓</div>
     <div class="input-grid">
-      <div class="number-box"><label for="weight">本组重量</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="weight" data-delta="-2.5" aria-label="重量减 2.5">−</button><input id="weight" type="number" inputmode="decimal" step="2.5" value="${set.weight}"><span>${state.unit}</span><button data-action="adjust-set-value" data-field="weight" data-delta="2.5" aria-label="重量加 2.5">＋</button></div></div>
+      <div class="number-box"><label for="weight">本组重量</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="weight" data-delta="-1" aria-label="重量减 1">−</button><input id="weight" type="number" inputmode="decimal" step="1" value="${set.weight}"><span>${state.unit}</span><button data-action="adjust-set-value" data-field="weight" data-delta="1" aria-label="重量加 1">＋</button></div></div>
       <div class="number-box"><label for="reps">完成次数</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="reps" data-delta="-1" aria-label="次数减 1">−</button><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>次</span><button data-action="adjust-set-value" data-field="reps" data-delta="1" aria-label="次数加 1">＋</button></div></div>
     </div>
     <button class="primary complete-set full" data-action="save-set">保存本组</button>
@@ -417,7 +417,6 @@ function renderExerciseDetail() {
     <div class="detail-hero"><span class="detail-group">${ex.group} · ${ex.subgroup}</span><h1>${ex.name}</h1><p>${ex.equipment} · ${ex.muscles.join(" / ")}</p></div>
     <div class="guidance-grid"><article><span>负重倾向</span><strong>${ex.load}</strong></article><article><span>常用次数</span><strong>${ex.reps}</strong></article></div>
     <article class="card tip-card"><p class="eyebrow">训练要点</p><ul>${ex.tips.map(tip => `<li>${tip}</li>`).join("")}</ul></article>
-    <article class="source-note"><strong>使用提示</strong><p>重量与次数是一般参考范围。优先选择能保持动作控制的重量；出现疼痛、眩晕或异常不适时停止训练。</p><p class="reference-links"><a href="https://acsm.org/resistance-training-guidelines-update-2026/" target="_blank" rel="noreferrer">ACSM 阻力训练指南</a><a href="https://www.acefitness.org/resources/everyone/exercise-library/equipment/" target="_blank" rel="noreferrer">ACE 动作库</a></p></article>
     <div class="sticky-action">${target ? `<button class="primary full" data-add-exercise="${ex.id}" ${added ? "disabled" : ""}>${added ? "已加入记录" : "加入训练记录"}</button>` : `<button class="primary full" data-action="start-from-detail">请先开始健身</button>`}</div>
   </section>${editingHistory ? "" : nav("exercises")}`;
 }
@@ -596,7 +595,7 @@ function bindEvents() {
   document.querySelectorAll("[data-nav]").forEach(el => el.addEventListener("click", () => { state.screen = el.dataset.nav; saveState(); render(); }));
   document.querySelectorAll("[data-open-exercise]").forEach(el => el.addEventListener("click", () => { state.activeExercise = Number(el.dataset.openExercise); state.screen = "exercise"; saveState(); render(); }));
   document.querySelectorAll("[data-add-exercise]").forEach(el => el.addEventListener("click", () => addExercise(el.dataset.addExercise)));
-  document.querySelectorAll("[data-quick-add]").forEach(el => el.addEventListener("click", () => { if (!state.workout) return toast("请先点击开始健身"); addExercise(el.dataset.quickAdd); }));
+  document.querySelectorAll("[data-quick-add]").forEach(el => el.addEventListener("click", () => { state.activeDetailId = el.dataset.quickAdd; state.screen = "exercise-detail"; saveState(); render(); }));
   document.querySelectorAll("[data-history-id]").forEach(el => el.addEventListener("click", () => {
     const swipeRecord = el.closest("[data-swipe-record]");
     if (swipeRecord?.classList.contains("open")) { closeSwipeRecord(swipeRecord); return; }
