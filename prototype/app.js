@@ -84,7 +84,7 @@ const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿", "核心"];
 
 function emptyState() {
   return {
-    version: 8, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
+    version: 9, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
     editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null, calendarOffset: 0,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
@@ -99,7 +99,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 8, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 9, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -136,7 +136,7 @@ function createWorkout(startedAt = now()) {
 }
 
 function createExercise(source) {
-  const last = latestSetFor(source.id);
+  const last = latestFirstSetFor(source.id);
   return {
     id: source.id,
     name: source.name,
@@ -152,10 +152,10 @@ function createExercise(source) {
   };
 }
 
-function latestSetFor(id) {
+function latestFirstSetFor(id) {
   for (const workout of state.history) {
     const ex = workout.exercises.find(item => item.id === id);
-    const set = ex?.sets.filter(item => item.endedAt).at(-1);
+    const set = ex?.sets.find(item => item.endedAt);
     if (set) return set;
   }
   return null;
@@ -337,9 +337,10 @@ function renderExercise() {
 function renderSet(ex, set, index, nextIndex) {
   const complete = Boolean(set.endedAt);
   const current = index === nextIndex && !complete;
+  const deletable = !complete && !set.startedAt && ex.sets.length > 1;
   const duration = complete ? secondsBetween(set.startedAt, set.endedAt) : set.startedAt ? secondsBetween(set.startedAt, now()) : 0;
   const rest = restAfter(ex, index);
-  return `<div><div class="set-row ${complete ? "complete" : ""} ${current ? "current" : ""}"><span class="set-index">${complete ? "✓" : index + 1}</span><span class="set-main"><strong>${set.weight} ${state.unit} × ${set.reps}</strong><small>${complete ? `本组 ${formatDuration(duration)}` : current ? "下一组" : "待完成"}</small></span><span class="mono subtle">${complete ? `${clockTime(set.startedAt)}–${clockTime(set.endedAt)}` : ""}</span></div>${rest !== null ? `<div class="rest-row mono">组间歇 <span data-rest-index="${index}">${formatDuration(rest)}</span>${!ex.sets[index + 1].startedAt ? " ↑" : ""}</div>` : ""}</div>`;
+  return `<div><div class="set-swipe ${deletable ? "deletable" : ""}" data-set-swipe="${index}">${deletable ? `<button class="set-swipe-delete" data-delete-pending-set="${index}" aria-label="删除第 ${index + 1} 组">删除</button>` : ""}<div class="set-row ${complete ? "complete" : ""} ${current ? "current" : ""}"><span class="set-index">${complete ? "✓" : index + 1}</span><span class="set-main"><strong>${set.weight} ${state.unit} × ${set.reps}</strong><small>${complete ? `本组 ${formatDuration(duration)}` : current ? "下一组" : "待完成"}</small></span><span class="mono subtle">${complete ? `${clockTime(set.startedAt)}–${clockTime(set.endedAt)}` : ""}</span></div></div>${rest !== null ? `<div class="rest-row mono">组间歇 <span data-rest-index="${index}">${formatDuration(rest)}</span>${!ex.sets[index + 1].startedAt ? " ↑" : ""}</div>` : ""}</div>`;
 }
 
 function latestExerciseFor(id) {
@@ -372,8 +373,8 @@ function renderSetEntry() {
     <div><p class="eyebrow" style="color:#bfe1d7">${ex.name}</p><h2>第 ${state.pendingSetIndex + 1} 组已结束</h2><p class="subtle">${clockTime(set.startedAt)}–${clockTime(set.endedAt)} · 本组 ${formatDuration(secondsBetween(set.startedAt, set.endedAt))}</p></div>
     <div class="entry-check">✓</div>
     <div class="input-grid">
-      <div class="number-box"><label for="weight">本组重量</label><div class="number-wrap"><input id="weight" type="number" inputmode="decimal" step="0.5" value="${set.weight}"><span>${state.unit}</span></div></div>
-      <div class="number-box"><label for="reps">完成次数</label><div class="number-wrap"><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>次</span></div></div>
+      <div class="number-box"><label for="weight">本组重量</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="weight" data-delta="-2.5" aria-label="重量减 2.5">−</button><input id="weight" type="number" inputmode="decimal" step="2.5" value="${set.weight}"><span>${state.unit}</span><button data-action="adjust-set-value" data-field="weight" data-delta="2.5" aria-label="重量加 2.5">＋</button></div></div>
+      <div class="number-box"><label for="reps">完成次数</label><div class="number-wrap stepper"><button data-action="adjust-set-value" data-field="reps" data-delta="-1" aria-label="次数减 1">−</button><input id="reps" type="number" inputmode="numeric" step="1" value="${set.reps}"><span>次</span><button data-action="adjust-set-value" data-field="reps" data-delta="1" aria-label="次数加 1">＋</button></div></div>
     </div>
     <button class="primary complete-set full" data-action="save-set">保存本组</button>
     <button class="cancel-link" data-action="undo-end-set">返回继续计时</button>
@@ -636,9 +637,15 @@ function bindEvents() {
     saveState(); render();
   }));
   document.querySelectorAll("[data-edit-remove-exercise]").forEach(el => el.addEventListener("click", () => { state.editingWorkout.exercises.splice(Number(el.dataset.editRemoveExercise), 1); saveState(); render(); }));
+  document.querySelectorAll("[data-delete-pending-set]").forEach(el => el.addEventListener("click", () => {
+    const ex = state.workout.exercises[state.activeExercise];
+    ex.sets.splice(Number(el.dataset.deletePendingSet), 1);
+    saveState(); render();
+  }));
   document.querySelectorAll("[data-action]").forEach(el => el.addEventListener("click", () => handleAction(el.dataset.action, el)));
   document.getElementById("exercise-search")?.addEventListener("input", event => { state.query = event.target.value; saveState(); render(); document.getElementById("exercise-search")?.focus(); });
   bindSwipeRecords();
+  bindSetSwipeRows();
 }
 
 function closeSwipeRecord(record) {
@@ -667,6 +674,32 @@ function bindSwipeRecords() {
       card.style.transition = "";
       if (deltaX < -42) { record.classList.add("open"); card.style.transform = "translateX(-84px)"; }
       else closeSwipeRecord(record);
+    });
+  });
+}
+
+function bindSetSwipeRows() {
+  document.querySelectorAll(".set-swipe.deletable").forEach(record => {
+    const row = record.querySelector(".set-row");
+    let startX = 0;
+    let deltaX = 0;
+    row.addEventListener("touchstart", event => {
+      document.querySelectorAll(".set-swipe.open").forEach(open => {
+        if (open !== record) { open.classList.remove("open"); open.querySelector(".set-row").style.transform = "translateX(0)"; }
+      });
+      startX = event.touches[0].clientX;
+      deltaX = 0;
+      row.style.transition = "none";
+    }, { passive: true });
+    row.addEventListener("touchmove", event => {
+      deltaX = event.touches[0].clientX - startX;
+      if (Math.abs(deltaX) > 8) event.preventDefault();
+      row.style.transform = `translateX(${Math.max(-72, Math.min(0, deltaX))}px)`;
+    }, { passive: false });
+    row.addEventListener("touchend", () => {
+      row.style.transition = "";
+      if (deltaX < -38) { record.classList.add("open"); row.style.transform = "translateX(-72px)"; }
+      else { record.classList.remove("open"); row.style.transform = "translateX(0)"; }
     });
   });
 }
@@ -704,7 +737,21 @@ function addExercise(id) {
 
 function handleAction(action, el) {
   if (action === "start-workout") return startWorkout();
-  if (action === "start-from-detail") return startWorkout();
+  if (action === "start-from-detail") {
+    if (!state.workout) state.workout = createWorkout();
+    const source = catalogue.find(ex => ex.id === state.activeDetailId);
+    if (source && !state.workout.exercises.some(ex => ex.id === source.id)) state.workout.exercises.push(createExercise(source));
+    state.activeExercise = Math.max(0, state.workout.exercises.findIndex(ex => ex.id === state.activeDetailId));
+    state.screen = "workout";
+    saveState(); return render();
+  }
+  if (action === "adjust-set-value") {
+    const input = document.getElementById(el.dataset.field);
+    const delta = Number(el.dataset.delta);
+    const value = Math.max(0, Number(input.value || 0) + delta);
+    input.value = el.dataset.field === "reps" ? Math.round(value) : Number(value.toFixed(2));
+    return;
+  }
   if (action === "previous-calendar-month") { state.calendarOffset -= 1; saveState(); return render(); }
   if (action === "next-calendar-month") { state.calendarOffset = Math.min(0, state.calendarOffset + 1); saveState(); return render(); }
   if (action === "current-calendar-month") { state.calendarOffset = 0; saveState(); return render(); }
