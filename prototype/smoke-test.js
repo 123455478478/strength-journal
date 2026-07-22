@@ -14,6 +14,21 @@ const { pathToFileURL } = require("url");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
+  await page.locator('.bottom-nav [data-nav="exercises"]').click();
+  await page.getByRole("button", { name: "胸部", exact: true }).click();
+  if (await page.locator('[data-detail-id="dip"]').count() !== 1) throw new Error("胸部缺少双杠臂屈伸");
+  await page.getByRole("button", { name: "背部", exact: true }).click();
+  for (const id of ["widepulldown", "closepulldown", "reversepulldown"]) if (await page.locator(`[data-detail-id="${id}"]`).count() !== 1) throw new Error("背部缺少握法下拉动作");
+  await page.getByRole("button", { name: "肩部", exact: true }).click();
+  if (await page.locator('[data-detail-id="strictpress"]').count() !== 1) throw new Error("肩部缺少实力推");
+  await page.getByRole("button", { name: "核心", exact: true }).click();
+  if (await page.locator('[data-detail-id="plank"]').count() !== 1 || await page.locator('[data-detail-id="backextension"]').count() !== 1) throw new Error("核心动作不完整");
+  await page.screenshot({ path: path.join(__dirname, "preview-core.png"), fullPage: true });
+  await page.locator('[data-detail-id="plank"]').click();
+  await page.getByRole("button", { name: "请先开始健身" }).click();
+  if (!await page.getByText("健身进行中", { exact: true }).isVisible()) throw new Error("动作详情未跳转到训练界面");
+  await page.getByRole("button", { name: "结束健身" }).click();
+
   await page.getByRole("button", { name: "开始健身" }).click();
   await page.getByRole("button", { name: "结束健身" }).click();
   if (!await page.getByRole("button", { name: "开始健身" }).isVisible()) throw new Error("空训练结束后没有返回首页");
@@ -22,6 +37,7 @@ const { pathToFileURL } = require("url");
 
   await page.getByRole("button", { name: "开始健身" }).click();
   await page.getByRole("button", { name: "先添加一个动作" }).click();
+  await page.getByRole("button", { name: "胸部", exact: true }).click();
   await page.locator('[data-add-exercise="bench"]').click();
   await page.getByRole("button", { name: "‹" }).click();
   await page.getByRole("button", { name: "结束健身" }).click();
@@ -31,6 +47,7 @@ const { pathToFileURL } = require("url");
 
   await page.getByRole("button", { name: "开始健身" }).click();
   await page.getByRole("button", { name: "先添加一个动作" }).click();
+  await page.getByRole("button", { name: "胸部", exact: true }).click();
   await page.locator('[data-add-exercise="bench"]').click();
   await page.getByRole("button", { name: "开始第 1 组" }).click();
   await page.waitForTimeout(1100);
@@ -59,7 +76,7 @@ const { pathToFileURL } = require("url");
   await page.getByRole("button", { name: "完成", exact: true }).click();
   const savedNote = await page.evaluate(() => JSON.parse(localStorage.getItem("strength-journal-recorder-v2")).history[0].note);
   if (savedNote !== "卧推状态稳定，第二组注意控制下放。") throw new Error("结束总结页的训练心得未保存");
-  const chestIds = ["bench", "incline", "chestpress", "fly", "dbbench", "inclinebar", "declinepress", "pecdeck", "pushup"];
+  const chestIds = ["bench", "incline", "chestpress", "fly", "dbbench", "inclinebar", "declinepress", "pecdeck", "pushup", "dip"];
   if (chestIds.includes(await page.locator(".quick-exercise").first().getAttribute("data-quick-add"))) throw new Error("训练前建议没有避开上次胸部");
 
   await page.getByRole("button", { name: "开始健身" }).click();
@@ -121,7 +138,7 @@ const { pathToFileURL } = require("url");
   await page.screenshot({ path: path.join(__dirname, "preview-history.png"), fullPage: true });
 
   await page.locator('[data-nav="exercises"]').click();
-  for (const group of ["胸部", "背部", "肩部", "手臂", "腿"]) {
+  for (const group of ["胸部", "背部", "肩部", "手臂", "腿", "核心"]) {
     await page.getByRole("button", { name: group, exact: true }).click();
     if (await page.locator(".group-summary strong").textContent() !== group) throw new Error(`${group}筛选按钮无法使用`);
   }

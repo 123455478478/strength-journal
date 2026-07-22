@@ -7,11 +7,15 @@ const catalogue = [
   { id: "fly", name: "绳索夹胸", group: "胸部", subgroup: "胸部孤立", muscles: ["胸大肌"], equipment: "绳索", load: "小到中等重量", reps: "10–20 次", tips: ["肘部保持轻微弯曲并固定角度", "用胸部合拢手臂，不要变成推举", "肩前侧不适时缩短幅度"] },
 
   { id: "pulldown", name: "高位下拉", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "器械", load: "中等重量", reps: "8–12 次", tips: ["先下沉肩胛，再将肘部拉向身体两侧", "躯干只轻微后倾，避免借力摇摆", "拉到胸前，不要拉到颈后"] },
+  { id: "widepulldown", name: "宽握正手高位下拉", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "大圆肌", "肱二头"], equipment: "器械", load: "中等重量", reps: "8–15 次", tips: ["握距略宽于肩即可，不必追求极宽", "先下沉肩胛，再把肘部拉向身体两侧", "拉到上胸位置，不做颈后下拉"] },
+  { id: "closepulldown", name: "窄握对握高位下拉", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "器械", load: "中等重量", reps: "8–15 次", tips: ["使用对握把手并保持手腕中立", "肘部向下并略向后拉近身体", "避免大幅后仰把动作变成划船"] },
+  { id: "reversepulldown", name: "反手高位下拉", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "器械", load: "小到中等重量", reps: "8–15 次", tips: ["使用肩宽或略窄的反手握距", "保持胸廓稳定，将肘部拉向身体两侧", "手腕或肘部不适时改用对握"] },
   { id: "pullup", name: "引体向上", group: "背部", subgroup: "垂直拉", muscles: ["背阔肌", "肱二头"], equipment: "单杠", load: "自重或附加重量", reps: "4–12 次", tips: ["从肩胛稳定开始，不要耸肩悬挂", "保持躯干稳定，避免大幅摆动", "能力不足时使用辅助器械或弹力带"] },
   { id: "row", name: "坐姿划船", group: "背部", subgroup: "水平拉", muscles: ["背阔肌", "菱形肌", "肱二头"], equipment: "器械", load: "中等重量", reps: "8–15 次", tips: ["保持脊柱中立和胸廓稳定", "肘部向后拉，结束时避免过度后仰", "回程受控，让肩胛自然前伸"] },
   { id: "dbrow", name: "单臂哑铃划船", group: "背部", subgroup: "水平拉", muscles: ["背阔肌", "肱二头"], equipment: "哑铃", load: "中等重量", reps: "8–15 次/侧", tips: ["支撑侧保持稳定，避免身体旋转", "将肘部拉向髋部而不是耸肩", "下放时保持控制"] },
 
   { id: "press", name: "哑铃推举", group: "肩部", subgroup: "前束/整体", muscles: ["三角肌前束", "三角肌中束", "肱三头"], equipment: "哑铃", load: "中等重量", reps: "6–12 次", tips: ["收紧躯干，避免腰部过度反弓", "手腕与前臂保持对齐", "肩部不适时使用中立握法"] },
+  { id: "strictpress", name: "杠铃实力推", group: "肩部", subgroup: "前束/整体", muscles: ["三角肌前束", "三角肌中束", "肱三头", "核心"], equipment: "杠铃", load: "中等到大重量", reps: "4–10 次", tips: ["从锁骨附近起始，收紧臀腿和躯干", "不借助屈膝弹起，保持严格站姿推举", "杠铃通过头部后让头部自然回到杠下"] },
   { id: "raise", name: "哑铃侧平举", group: "肩部", subgroup: "中束", muscles: ["三角肌中束"], equipment: "哑铃", load: "小重量", reps: "12–20 次", tips: ["用肩部抬起，不要靠身体摆动", "手臂在舒适角度内抬至接近肩高", "保持手腕自然，避免刻意向内旋转"] },
   { id: "reversefly", name: "反向飞鸟", group: "肩部", subgroup: "后束", muscles: ["三角肌后束", "上背部"], equipment: "器械", load: "小到中等重量", reps: "12–20 次", tips: ["胸部稳定贴靠垫", "手臂向两侧打开，不要耸肩", "控制回程，不让重量片撞击"] },
   { id: "facepull", name: "绳索面拉", group: "肩部", subgroup: "后束/肩袖", muscles: ["三角肌后束", "肩袖", "上背部"], equipment: "绳索", load: "小到中等重量", reps: "12–20 次", tips: ["绳索拉向眉眼高度", "结束时双手分开、肘部向外", "保持肋骨稳定，不要后仰借力"] },
@@ -52,7 +56,7 @@ const catalogue = [
   { id: "reversecurl", name: "反握杠铃弯举", group: "手臂", subgroup: "前臂", muscles: ["肱桡肌", "前臂伸肌"], equipment: "杠铃", load: "小重量", reps: "10–15 次", tips: ["使用较轻重量并保持手腕中立", "肘部靠近身体", "避免用身体摆动完成"] },
   { id: "closebench", name: "窄握卧推", group: "手臂", subgroup: "肱三头", muscles: ["肱三头", "胸大肌"], equipment: "杠铃", load: "中等到大重量", reps: "5–10 次", tips: ["握距无需过窄，保持手腕与前臂对齐", "肘部沿身体两侧自然下降", "大重量使用保护杆或保护者"] },
   { id: "skullcrusher", name: "仰卧臂屈伸", group: "手臂", subgroup: "肱三头", muscles: ["肱三头"], equipment: "曲杆", load: "小到中等重量", reps: "8–15 次", tips: ["上臂保持相对固定", "杠铃向头后或额头方向受控下降", "肘部不适时改用绳索动作"] },
-  { id: "dip", name: "双杠臂屈伸", group: "手臂", subgroup: "肱三头", muscles: ["肱三头", "胸大肌"], equipment: "双杠", load: "自重或附加重量", reps: "5–15 次", tips: ["肩胛保持稳定，避免肩部耸起", "只下降到肩部舒适的深度", "不能稳定完成时使用辅助器械"] },
+  { id: "dip", name: "双杠臂屈伸", group: "胸部", subgroup: "下胸", muscles: ["胸大肌下部", "肱三头", "三角肌前束"], equipment: "双杠", load: "自重或附加重量", reps: "5–15 次", tips: ["躯干适度前倾以增加胸部参与", "肩胛保持稳定，只下降到肩部舒适的深度", "不能稳定完成时使用辅助器械"] },
 
   { id: "deadlift", name: "传统硬拉", group: "腿", subgroup: "后链/臀部", muscles: ["臀大肌", "腘绳肌", "背部"], equipment: "杠铃", load: "大重量", reps: "3–8 次", tips: ["起拉前固定躯干并让杠铃贴近身体", "脚掌稳定发力，髋膝协调伸展", "疲劳导致背部位置失控时结束该组"] },
   { id: "frontsquat", name: "杠铃前蹲", group: "腿", subgroup: "股四头/臀部", muscles: ["股四头肌", "臀大肌", "躯干"], equipment: "杠铃", load: "中等到大重量", reps: "4–10 次", tips: ["肘部保持抬高并稳定杠铃", "躯干直立、脚掌稳定", "手腕或肩部受限时使用交叉臂或拉带握法"] },
@@ -63,14 +67,24 @@ const catalogue = [
   { id: "lyingcurl", name: "俯卧腿弯举", group: "腿", subgroup: "腘绳肌", muscles: ["腘绳肌"], equipment: "器械", load: "中等重量", reps: "10–15 次", tips: ["髋部保持贴住垫面", "脚垫位置接近脚踝上方", "受控弯曲和伸展膝关节"] },
   { id: "seatedcalf", name: "坐姿提踵", group: "腿", subgroup: "小腿", muscles: ["比目鱼肌", "腓肠肌"], equipment: "器械", load: "中等重量", reps: "12–25 次", tips: ["膝盖稳定在垫板下方", "脚踝完成可控全幅动作", "底部不要快速弹震"] },
   { id: "adductor", name: "坐姿髋内收", group: "腿", subgroup: "内收肌", muscles: ["大腿内收肌群"], equipment: "器械", load: "小到中等重量", reps: "12–20 次", tips: ["背部贴靠垫并保持骨盆稳定", "双腿平稳合拢，不用惯性", "选择髋部舒适的起始幅度"] },
-  { id: "abductor", name: "坐姿髋外展", group: "腿", subgroup: "臀部", muscles: ["臀中肌", "臀小肌"], equipment: "器械", load: "小到中等重量", reps: "12–25 次", tips: ["保持骨盆稳定，避免身体大幅摆动", "双膝受控向外打开", "回程不要让配重快速落下"] }
+  { id: "abductor", name: "坐姿髋外展", group: "腿", subgroup: "臀部", muscles: ["臀中肌", "臀小肌"], equipment: "器械", load: "小到中等重量", reps: "12–25 次", tips: ["保持骨盆稳定，避免身体大幅摆动", "双膝受控向外打开", "回程不要让配重快速落下"] },
+
+  { id: "crunch", name: "卷腹", group: "核心", subgroup: "腹部", muscles: ["腹直肌"], equipment: "自重", load: "自重", reps: "12–25 次", tips: ["用腹部带动胸廓靠近骨盆", "下背部保持自然贴近垫面", "避免拉扯颈部或借惯性起身"] },
+  { id: "cablecrunch", name: "跪姿绳索卷腹", group: "核心", subgroup: "腹部", muscles: ["腹直肌"], equipment: "绳索", load: "小到中等重量", reps: "10–20 次", tips: ["髋部位置保持相对稳定", "通过胸廓向骨盆靠近完成卷腹", "不要用手臂向下拉动重量"] },
+  { id: "hangingraise", name: "悬垂举腿", group: "核心", subgroup: "腹部", muscles: ["腹直肌", "髂腰肌"], equipment: "单杠", load: "自重", reps: "6–15 次", tips: ["先稳定肩胛并减少身体摆动", "抬腿末端轻微卷起骨盆", "难度过高时改做屈膝举腿"] },
+  { id: "abwheel", name: "健腹轮", group: "核心", subgroup: "抗伸展", muscles: ["腹直肌", "腹横肌", "背阔肌"], equipment: "健腹轮", load: "自重", reps: "5–15 次", tips: ["收紧臀部和腹部，避免腰部塌陷", "只推出到能够控制返回的距离", "先从跪姿和较小幅度开始"] },
+  { id: "plank", name: "平板支撑", group: "核心", subgroup: "抗伸展", muscles: ["腹横肌", "腹直肌", "臀部"], equipment: "自重", load: "自重", reps: "20–60 秒", tips: ["头、躯干和腿保持自然直线", "收紧腹部和臀部，避免腰部下沉", "保持自然呼吸，不要憋气"] },
+  { id: "sideplank", name: "侧平板支撑", group: "核心", subgroup: "侧腹", muscles: ["腹斜肌", "腹横肌", "臀中肌"], equipment: "自重", load: "自重", reps: "20–45 秒/侧", tips: ["肘部位于肩部正下方", "保持骨盆抬起，不向前后旋转", "难度过高时使用屈膝版本"] },
+  { id: "pallof", name: "绳索抗旋转推", group: "核心", subgroup: "抗旋转", muscles: ["腹斜肌", "腹横肌"], equipment: "绳索", load: "小到中等重量", reps: "8–15 次/侧", tips: ["身体侧对绳索并保持骨盆稳定", "双手推出时抵抗躯干旋转", "选择能保持呼吸和姿势的重量"] },
+  { id: "backextension", name: "罗马椅背伸", group: "核心", subgroup: "腰部", muscles: ["竖脊肌", "臀大肌", "腘绳肌"], equipment: "罗马椅", load: "自重或小重量", reps: "10–20 次", tips: ["髋部贴稳垫面并保持脊柱自然", "通过伸髋抬起躯干，不在顶部过度反弓", "出现腰部疼痛时停止并缩小幅度"] },
+  { id: "birddog", name: "鸟狗式", group: "核心", subgroup: "腰部稳定", muscles: ["多裂肌", "竖脊肌", "臀部", "腹部"], equipment: "自重", load: "自重", reps: "8–15 次/侧", tips: ["四点支撑时保持脊柱和骨盆稳定", "对侧手脚伸展，不追求过高幅度", "缓慢完成并避免身体左右旋转"] }
 ];
 
-const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿"];
+const muscleGroups = ["胸部", "背部", "肩部", "手臂", "腿", "核心"];
 
 function emptyState() {
   return {
-    version: 7, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
+    version: 8, screen: "train", activeExercise: 0, activeDetailId: null, pendingSetIndex: null,
     workout: null, history: [], summary: null, unit: "kg", query: "", groupFilter: "胸部",
     editingDateKey: null, editingHistoryId: null, editingWorkout: null, libraryContext: null, calendarOffset: 0,
     profile: { height: "", weight: "", age: "", gender: "未设置", benchMax: "", pullupMax: "", pushupMax: "", squatMax: "" }
@@ -85,7 +99,7 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!parsed) return emptyState();
     const fresh = emptyState();
-    return { ...fresh, ...parsed, version: 7, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
+    return { ...fresh, ...parsed, version: 8, profile: { ...fresh.profile, ...(parsed.profile || {}) } };
   } catch {
     return emptyState();
   }
@@ -403,7 +417,7 @@ function renderExerciseDetail() {
     <div class="guidance-grid"><article><span>负重倾向</span><strong>${ex.load}</strong></article><article><span>常用次数</span><strong>${ex.reps}</strong></article></div>
     <article class="card tip-card"><p class="eyebrow">训练要点</p><ul>${ex.tips.map(tip => `<li>${tip}</li>`).join("")}</ul></article>
     <article class="source-note"><strong>使用提示</strong><p>重量与次数是一般参考范围。优先选择能保持动作控制的重量；出现疼痛、眩晕或异常不适时停止训练。</p><p class="reference-links"><a href="https://acsm.org/resistance-training-guidelines-update-2026/" target="_blank" rel="noreferrer">ACSM 阻力训练指南</a><a href="https://www.acefitness.org/resources/everyone/exercise-library/equipment/" target="_blank" rel="noreferrer">ACE 动作库</a></p></article>
-    <div class="sticky-action"><button class="primary full" data-add-exercise="${ex.id}" ${added ? "disabled" : ""}>${added ? "已加入记录" : target ? "加入训练记录" : "请先开始健身"}</button></div>
+    <div class="sticky-action">${target ? `<button class="primary full" data-add-exercise="${ex.id}" ${added ? "disabled" : ""}>${added ? "已加入记录" : "加入训练记录"}</button>` : `<button class="primary full" data-action="start-from-detail">请先开始健身</button>`}</div>
   </section>${editingHistory ? "" : nav("exercises")}`;
 }
 
@@ -690,6 +704,7 @@ function addExercise(id) {
 
 function handleAction(action, el) {
   if (action === "start-workout") return startWorkout();
+  if (action === "start-from-detail") return startWorkout();
   if (action === "previous-calendar-month") { state.calendarOffset -= 1; saveState(); return render(); }
   if (action === "next-calendar-month") { state.calendarOffset = Math.min(0, state.calendarOffset + 1); saveState(); return render(); }
   if (action === "current-calendar-month") { state.calendarOffset = 0; saveState(); return render(); }

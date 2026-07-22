@@ -11,11 +11,11 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="stylesheet" href="styles.css?v=20260721-2">
+  <link rel="stylesheet" href="styles.css?v=20260722-1">
 </head>
 <body>
   <main class="phone-shell" id="app" aria-live="polite"></main>
-  <script src="app.js?v=20260721-2"></script>
+  <script src="app.js?v=20260722-1"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       let refreshing = false;
@@ -24,7 +24,7 @@
         refreshing = true;
         location.reload();
       });
-      navigator.serviceWorker.register("./service-worker.js?v=20260721-2", { updateViaCache: "none" })
+      navigator.serviceWorker.register("./service-worker.js?v=20260722-1", { updateViaCache: "none" })
         .then(registration => registration.update());
     }
   </script>
